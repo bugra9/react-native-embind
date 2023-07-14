@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 33
+    buildToolsVersion "33.0.0"
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 33
+        versionCode 100
+        versionName "1.0.0"
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "../cpp/CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation "com.facebook.react:react-native:+"
+}

@@ -1,0 +1,13 @@
+ 
+{
+    "name": "react-native-cppjs",
+    "version": "0.1.0",
+    "private": true,
+    "main": "js/index.js",
+    "peerDependencies": {
+        "react-native": "^0.72.0"
+    },
+    "dependencies": {
+        "react-native-embind": "file:../react-native-embind"
+    }
+} 
