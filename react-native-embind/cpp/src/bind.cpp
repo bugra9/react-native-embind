@@ -20,48 +20,13 @@
 #include <any>
 #include <unordered_map>
 
-int bugra_a(int a) {
-  return 8;
-}
-
-class BugraClass {
-public:
-    BugraClass(int b) {
-        this->b = b;
-    }
-    int deneme(int a) { return a * b; }
-
-
-    int getB() const {
-        return this->b;
-    }
-    void setB(int b_) {
-        this->b = b_;
-    }
-
-private:
-    int b;
-};
-
-class Bugra2Class: public BugraClass {
-public:
-    Bugra2Class(int b) : BugraClass(b) {}
-};
-
-class Bugra3Class {
-public:
-    static int waav(std::shared_ptr<BugraClass>& b, int a) { return b->deneme(a); }
-    static int oo(int d) {
-        return d * 2;
-    }
-};
 
 using namespace emscripten;
 using namespace internal;
 using namespace facebook;
 
 namespace emscripten {
-
+    facebook::jsi::Runtime* jsRuntime = nullptr;
     namespace internal {
 
         template<typename T>
@@ -1017,21 +982,4 @@ EMSCRIPTEN_BINDINGS(builtin) {
 
   register_memory_view<float>("emscripten::memory_view<float>");
   register_memory_view<double>("emscripten::memory_view<double>");
-
-  function("bugra_a", &bugra_a);
-
-    class_<BugraClass>("BugraClass")
-            .smart_ptr_constructor("BugraClass", &std::make_shared<BugraClass, int>)
-            .function("deneme", &BugraClass::deneme)
-            .property("b", &BugraClass::getB, &BugraClass::setB)
-            ;
-
-    class_<Bugra2Class, emscripten::base<BugraClass>>("Bugra2Class")
-            .smart_ptr_constructor("Bugra2Class", &std::make_shared<Bugra2Class, int>)
-            ;
-
-    class_<Bugra3Class>("Bugra3Class")
-            .class_function("waav", &Bugra3Class::waav)
-            .class_function("oo", &Bugra3Class::oo)
-            ;
 }

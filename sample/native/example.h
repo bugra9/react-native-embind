@@ -1,13 +1,28 @@
-class Example {
-public:
-    Example(int b);
+#pragma once
 
+#include <memory>
+
+int bugra_a(int a);
+
+class BugraClass {
+public:
+    BugraClass(int b);
     int deneme(int a);
+
     int getB() const;
     void setB(int b_);
 
-    static int sValue();
-
 private:
     int b;
+};
+
+class Bugra2Class: public BugraClass {
+public:
+    Bugra2Class(int b) : BugraClass(b) {}
+};
+
+class Bugra3Class {
+public:
+    static int waav(std::shared_ptr<BugraClass>& b, int a);
+    static int oo(int d);
 };

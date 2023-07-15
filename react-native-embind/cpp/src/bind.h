@@ -30,7 +30,7 @@
 #include "jsi/jsi.h"
 
 namespace emscripten {
-    static facebook::jsi::Runtime* jsRuntime;
+    extern facebook::jsi::Runtime* jsRuntime;
 
 enum class sharing_policy {
     NONE = 0,
