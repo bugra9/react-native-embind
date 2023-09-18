@@ -14,7 +14,7 @@
 #include <cassert>
 #include <array>
 #include <climits>
-#include <./wire.h>
+#include "./wire.h"
 #include <cstdint> // uintptr_t
 #include <vector>
 
