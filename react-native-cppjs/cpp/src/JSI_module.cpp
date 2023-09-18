@@ -2,7 +2,7 @@
 
 #include <jni.h>
 #include <jsi/jsi.h>
-#include "bind.h"
+#include <emscripten/bind.h>
 
 extern "C"
 {

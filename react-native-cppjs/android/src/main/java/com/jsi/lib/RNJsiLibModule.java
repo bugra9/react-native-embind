@@ -28,6 +28,6 @@ public class RNJsiLibModule extends ReactContextBaseJavaModule {
   public native void install(long jsContextNativePointer);
 
   static {
-    System.loadLibrary("react_native_cppjs");
+    System.loadLibrary("react-native-cppjs");
   }
 }

@@ -452,14 +452,6 @@ var HEAP = [],
 
 var HEAP_OFFSET = [];
 
-function getHeapIndex(ptr) {
-  if (ptr >= HEAP_OFFSET[1]) return 1;
-  if (ptr >= HEAP_OFFSET[3]) return 3;
-  else if (ptr >= HEAP_OFFSET[0]) return 0;
-  else if (ptr >= HEAP_OFFSET[2]) return 2;
-  throw('Heap error !!!');
-}
-
 function updateMemoryViews(offset, offset2, offset3, offset4) {
   // var b = wasmMemory.buffer;
   var b = globalThis.jsiArrayBuffer;
@@ -472,49 +464,107 @@ function updateMemoryViews(offset, offset2, offset3, offset4) {
   HEAP_OFFSET = [offset, offset2, offset3, offset4];
 
   HEAP8.push(new Int8Array(b));
-  HEAP16.push(new Int16Array(b));
-  HEAP32.push(new Int32Array(b));
-  HEAPU8.push(new Uint8Array(b));
-  HEAPU16.push(new Uint16Array(b));
-  HEAPU32.push(new Uint32Array(b));
-  HEAPF32.push(new Float32Array(b));
-  HEAPF64.push(new Float64Array(b));
-  HEAP64.push(new BigInt64Array(b));
-  HEAPU64.push(new BigUint64Array(b));
-
   HEAP8.push(new Int8Array(b2));
-  HEAP16.push(new Int16Array(b2));
-  HEAP32.push(new Int32Array(b2));
-  HEAPU8.push(new Uint8Array(b2));
-  HEAPU16.push(new Uint16Array(b2));
-  HEAPU32.push(new Uint32Array(b2));
-  HEAPF32.push(new Float32Array(b2));
-  HEAPF64.push(new Float64Array(b2));
-  HEAP64.push(new BigInt64Array(b2));
-  HEAPU64.push(new BigUint64Array(b2));
-
   HEAP8.push(new Int8Array(b3));
-  HEAP16.push(new Int16Array(b3));
-  HEAP32.push(new Int32Array(b3));
-  HEAPU8.push(new Uint8Array(b3));
-  HEAPU16.push(new Uint16Array(b3));
-  HEAPU32.push(new Uint32Array(b3));
-  HEAPF32.push(new Float32Array(b3));
-  HEAPF64.push(new Float64Array(b3));
-  HEAP64.push(new BigInt64Array(b3));
-  HEAPU64.push(new BigUint64Array(b3));
-
   HEAP8.push(new Int8Array(b4));
-  HEAP16.push(new Int16Array(b4));
-  HEAP32.push(new Int32Array(b4));
-  HEAPU8.push(new Uint8Array(b4));
-  HEAPU16.push(new Uint16Array(b4));
-  HEAPU32.push(new Uint32Array(b4));
-  HEAPF32.push(new Float32Array(b4));
-  HEAPF64.push(new Float64Array(b4));
-  HEAP64.push(new BigInt64Array(b4));
-  HEAPU64.push(new BigUint64Array(b4));
 
+  HEAPU8.push(new Uint8Array(b));
+  HEAPU8.push(new Uint8Array(b2));
+  HEAPU8.push(new Uint8Array(b3));
+  HEAPU8.push(new Uint8Array(b4));
+}
+
+function getHeapIndex(ptr) {
+  if (ptr >= HEAP_OFFSET[1]) return 1;
+  if (ptr >= HEAP_OFFSET[3]) return 3;
+  else if (ptr >= HEAP_OFFSET[0]) return 0;
+  else if (ptr >= HEAP_OFFSET[2]) return 2;
+  throw('Heap error !!!');
+}
+
+function getFloatHeapArray(shift, signed, buffer) {
+  const shiftAsInt = Number(shift);
+  switch (shiftAsInt) {
+    case 2: return new Float32Array(buffer);
+    case 3: return new Float64Array(buffer);
+    default:
+        throw new TypeError("Unknown heap type");
+  }
+}
+
+function getHeapArray(shift, signed, buffer) {
+  const shiftAsInt = Number(shift);
+  switch (shiftAsInt) {
+    case 0: return signed ? new Int8Array(buffer) : new Uint8Array(buffer);
+    case 1: return signed ? new Int16Array(buffer) : new Uint16Array(buffer);
+    case 2: return signed ? new Int32Array(buffer) : new Uint32Array(buffer);
+    case 3: return signed ? new BigInt64Array(buffer) : new BigUint64Array(buffer);
+    default:
+        throw new TypeError("Unknown heap type");
+  }
+}
+
+function writeToMemoryUsingShift(pointer, signed, shift, value) {
+  const pi = getHeapIndex(pointer);
+  // console.log(`writeToMemory, pi: ${pi}, shift: ${shiftAsInt}, signed: ${signed}, value: ${value}, pointer: ${pointer}`);
+  const shiftAsInt = Number(shift);
+  const HeapArray = signed ? HEAP8 : HEAPU8;
+
+  const heapArrayBuffer = getHeapArray(shiftAsInt, signed, value).buffer;
+  for (let i = 0; i < Math.pow(2, shiftAsInt); i += 1) {
+    HeapArray[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 0) + i] = heapArrayBuffer[i];
+  }
+}
+
+function readFromMemoryUsingShift(pointer, signed, shift, isFloat = false) {
+  const pi = getHeapIndex(pointer);
+  // console.log(`readFromMemory, pi: ${pi}, shift: ${shift}, signed: ${signed}, pointer: ${pointer}`);
+  const shiftAsInt = Number(shift);
+  const HeapArray = signed ? HEAP8 : HEAPU8;
+  
+  const tempArray = [];
+  for (let i = 0; i < Math.pow(2, shiftAsInt); i += 1) {
+    tempArray.push(HeapArray[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 0) + i]);
+  }
+
+  const getHeapArrayFunc = isFloat ? getFloatHeapArray : getHeapArray;
+
+  const arrayBuffer = getHeapArray(0, signed, tempArray);
+  return getHeapArrayFunc(shiftAsInt, signed, arrayBuffer)[0];
+}
+
+function readFromMemoryUsingBit(pointer, signed, bit) {
+  let shift = 0;
+  switch (bit) {
+    case 8: shift = 0;
+      break;
+    case 16: shift = 1;
+      break;
+    case 32: shift = 2;
+      break;
+    case 64: shift = 3;
+      break;
+    default:
+        throw new TypeError("Unknown bit");
+  }
+  
+  return readFromMemoryUsingShift(pointer, signed, shift);
+}
+
+function readFromMemoryUsingSize(pointer, signed, bit) {
+  let shift = 0;
+  switch (bit) {
+    case 1: shift = 0;
+      break;
+    case 2: shift = 1;
+      break;
+    case 4: shift = 2;
+      break;
+    default:
+        throw new TypeError("Unknown size");
+  }
+  
+  return readFromMemoryUsingShift(pointer, signed, shift);
 }
 
 globalThis.updateMemoryViews = updateMemoryViews;
@@ -1279,22 +1329,8 @@ function dbg(text) {
           },
           'argPackAdvance': 8,
           'readValueFromPointer': function(pointer) {
-              const pi = getHeapIndex(pointer);
-              // TODO: if heap is fixed (like in asm.js) this could be executed outside
-              var heap;
-              if (size === 1) {
-                  heap = HEAP8;
-              } else if (size === 2) {
-                  heap = HEAP16;
-              } else if (size === 4) {
-                  heap = HEAP32;
-              } else {
-                  throw new TypeError("Unknown boolean type size: " + name);
-              }
-              heap = heap[pi];
-              //console.log('HEAP', pointer, HEAP_OFFSET);
-              // console.log('__embind_register_bool readValueFromPointer', pointer, (Number(pointer-HEAP_OFFSET[pi]) >>> shift) >>> 0);
-              return this['fromWireType'](heap[(Number(pointer-HEAP_OFFSET[pi]) >>> shift) >>> 0]);
+              // console.log('__embind_register_bool readValueFromPointer', pointer);
+              return this['fromWireType'](readFromMemoryUsingSize(pointer, true, size));
           },
           destructorFunction: null, // This type does not need a destructor
       });
@@ -1320,20 +1356,20 @@ function dbg(text) {
       switch (shift) {
           case 0:
           case 0n: return signed ?
-              function readS8FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAP8[pi][Number(pointer-HEAP_OFFSET[pi])]; } :
-              function readU8FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAPU8[pi][Number(pointer-HEAP_OFFSET[pi])]; };
+              function readS8FromPointer(pointer) { return readFromMemoryUsingShift(pointer, true, 0); } :
+              function readU8FromPointer(pointer) { return readFromMemoryUsingShift(pointer, false, 0); };
           case 1:
           case 1n: return signed ?
-              function readS16FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAP16[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 1) >>> 0]; } :
-              function readU16FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAPU16[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 1) >>> 0]; };
+              function readS16FromPointer(pointer) { return readFromMemoryUsingShift(pointer, true, 1); } :
+              function readU16FromPointer(pointer) { return readFromMemoryUsingShift(pointer, false, 1); };
           case 2:
           case 2n: return signed ?
-              function readS32FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAP32[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 2) >>> 0]; } :
-              function readU32FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAPU32[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 2) >>> 0]; };
+              function readS32FromPointer(pointer) { return readFromMemoryUsingShift(pointer, true, 2); } :
+              function readU32FromPointer(pointer) { return readFromMemoryUsingShift(pointer, false, 2); };
           case 3:
           case 3n: return signed ?
-              function readS64FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAP64[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 3) >>> 0]; } :
-              function readU64FromPointer(pointer) { const pi = getHeapIndex(pointer); return HEAPU64[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 3) >>> 0]; };
+              function readS64FromPointer(pointer) { return readFromMemoryUsingShift(pointer, true, 3); } :
+              function readU64FromPointer(pointer) { return readFromMemoryUsingShift(pointer, false, 3); };
           default:
               throw new TypeError("Unknown integer type: " + name);
       }
@@ -1433,14 +1469,13 @@ function dbg(text) {
 
 
   function floatReadValueFromPointer(name, shift) {
+    // console.log('floatReadValueFromPointer');
       switch (shift) {
           case 2: return function(pointer) {
-              const pi = getHeapIndex(pointer);
-              return this['fromWireType'](HEAPF32[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 2) >>> 0]);
+            return readFromMemoryUsingShift(pointer, true, 2, true);
           };
           case 3: return function(pointer) {
-              const pi = getHeapIndex(pointer);
-              return this['fromWireType'](HEAPF64[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 3) >>> 0]);
+            return readFromMemoryUsingShift(pointer, true, 3, true);
           };
           default:
               throw new TypeError("Unknown float type: " + name);
@@ -1476,14 +1511,17 @@ function dbg(text) {
 
 
   function simpleReadValueFromPointer(pointer) {
-      const pi = getHeapIndex(pointer);
-      //console.log('HEAP', pointer, HEAP_OFFSET);
-      // console.log('simpleReadValueFromPointer :', JSON.stringify(pointer, null, 2), pi, ((Number(pointer-HEAP_OFFSET[pi]))>>>2) >>> 0);
-      return this['fromWireType'](HEAP32[pi][((Number(pointer-HEAP_OFFSET[pi]))>>>2) >>> 0]);
+      /* console.log(
+        'simpleReadValueFromPointer :',
+        this.name, JSON.stringify(pointer, null, 2), 
+        readFromMemoryUsingShift(pointer, true, 2)
+      ); */
+      return this['fromWireType'](readFromMemoryUsingShift(pointer, true, 2));
     }
 
 
   function stringToUTF8Array(str, heap, outIdx, maxBytesToWrite) {
+    // console.log('stringToUTF8Array');
       assert(typeof str === 'string');
       // Parameter maxBytesToWrite is not optional. Negative values, 0, null,
       // undefined and false each don't write out any bytes.
@@ -1826,6 +1864,7 @@ function dbg(text) {
           if (!(typeof value == 'string')) {
             throwBindingError('Cannot pass non-string to C++ string type ' + name);
           }
+          // console.log('registerType toWireType');
 
           // assumes 4-byte alignment
           var length = lengthBytesUTF(value);
@@ -1851,14 +1890,17 @@ function dbg(text) {
       this.allocated = [undefined];
       this.freelist = [];
       this.get = function(id) {
+        // console.log('HandleAllocator get', id);
         return this.allocated[id];
       };
       this.allocate = function(handle) {
         var id = this.freelist.pop() || this.allocated.length;
+        // console.log('HandleAllocator allocate', id, JSON.stringify(handle));
         this.allocated[id] = handle;
         return id;
       };
       this.free = function(id) {
+        // console.log('HandleAllocator free', id);
         // Set the slot to `undefined` rather than using `delete` here since
         // apparently arrays with holes in them can be less efficient.
         this.allocated[id] = undefined;
@@ -1867,11 +1909,11 @@ function dbg(text) {
     }
   var emval_handles = new HandleAllocator();;
   function __emval_decref(handle) {
-    //console.log('__emval_decref');
+    // console.log('__emval_decref');
       if (handle >= emval_handles.reserved && 0 === --emval_handles.get(handle).refcount) {
         emval_handles.free(handle);
       }
-      //console.log('__emval_decref2');
+      // console.log('__emval_decref2');
     }
     globalThis.__emval_decref = __emval_decref;
 
@@ -1900,12 +1942,12 @@ function dbg(text) {
       Module['count_emval_handles'] = count_emval_handles;
     }
   var Emval = {toValue:(handle) => {
-        if (!handle) {
+        if (!handle || !emval_handles.get(handle)) {
             throwBindingError('Cannot use deleted val. handle = ' + handle);
         }
         return emval_handles.get(handle).value;
       },toHandle:(value) => {
-        //console.log('Emval toHandle', value);
+        // console.log('Emval toHandle', value);
         switch (value) {
           case undefined: return 1;
           case null: return 2;
@@ -1913,7 +1955,7 @@ function dbg(text) {
           case false: return 4;
           default:{
             const r = emval_handles.allocate({refcount: 1, value: value});
-            //console.log('Emval toHandle default: ', r);
+            // console.log('Emval toHandle default: ', r);
             return r;
           }
         }
@@ -1926,15 +1968,15 @@ function dbg(text) {
       registerType(rawType, {
         name: name,
         'fromWireType': function(handle) {
-          //console.log('emval fromWireType');
+          // console.log('emval fromWireType1', registeredTypes[rawType], this.name, handle);
           var rv = Emval.toValue(handle);
-          //console.log('emval fromWireType', rv);
+          // console.log('emval fromWireType2', rv);
           __emval_decref(handle);
           //console.log('emval fromWireType 2');
           return rv;
         },
         'toWireType': function(destructors, value) {
-          //console.log('emval toWireType');
+          // console.log('emval toWireType');
           return Emval.toHandle(value);
         },
         'argPackAdvance': 8,
@@ -1965,7 +2007,7 @@ function dbg(text) {
       var TA = typeMapping[dataTypeIndex];
 
       function decodeMemoryView(handle) {
-        handle = handle >> 2;
+        handle = handle >>> 2;
         var heap = HEAPU32;
         var size = heap[handle]; // in elements
         var data = heap[handle + 1]; // byte offset into emscripten heap
@@ -2512,6 +2554,7 @@ function dbg(text) {
 
 
   function ClassHandle_isAliasOf(other) {
+    // console.log('ClassHandle_isAliasOf');
       if (!(this instanceof ClassHandle)) {
         return false;
       }
@@ -2633,6 +2676,7 @@ function dbg(text) {
   var registeredInstances = {};
 
   function getBasestPointer(class_, ptr) {
+    // console.log('getBasestPointer');
       if (ptr === undefined) {
           throwBindingError('ptr should not be undefined');
       }
@@ -2897,6 +2941,7 @@ function dbg(text) {
 
 
   function upcastPointer(ptr, ptrClass, desiredClass) {
+    // console.log('upcastPointer');
       while (ptrClass !== desiredClass) {
         if (!ptrClass.upcast) {
           throwBindingError(`Expected null or instance of ${desiredClass.name}, got an instance of ${ptrClass.name}`);
@@ -2907,7 +2952,7 @@ function dbg(text) {
       return ptr;
     }
   function constNoSmartPtrRawPointerToWireType(destructors, handle) {
-    //console.log('constNoSmartPtrRawPointerToWireType');
+    // console.log('constNoSmartPtrRawPointerToWireType');
       if (handle === null) {
         if (this.isReference) {
           throwBindingError('null is not a valid ' + this.name);
@@ -2928,7 +2973,7 @@ function dbg(text) {
 
 
   function genericPointerToWireType(destructors, handle) {
-    //console.log('genericPointerToWireType');
+    // console.log('genericPointerToWireType');
       var ptr;
       if (handle === null) {
         if (this.isReference) {
@@ -3012,7 +3057,7 @@ function dbg(text) {
 
 
   function nonConstNoSmartPtrRawPointerToWireType(destructors, handle) {
-    //console.log('nonConstNoSmartPtrRawPointerToWireType');
+    // console.log('nonConstNoSmartPtrRawPointerToWireType');
       if (handle === null) {
         if (this.isReference) {
           throwBindingError('null is not a valid ' + this.name);
@@ -3391,6 +3436,7 @@ function dbg(text) {
       if (!this_.$$.ptr) {
         throwBindingError(`cannot call emscripten binding method ${humanName} on deleted object`);
       }
+      // console.log('validateThis');
 
       // todo: kill this
       return upcastPointer(this_.$$.ptr,
@@ -3420,7 +3466,7 @@ function dbg(text) {
           enumerable: true,
           configurable: true
         };
-        if (setter) {
+        if (setter && setterContext) {
           desc.set = () => {
             throwUnboundTypeError(`Cannot access ${humanName} due to unbound types`, [getterReturnType, setterArgumentType]);
           };
@@ -3434,7 +3480,7 @@ function dbg(text) {
 
         whenDependentTypesAreResolved(
           [],
-          (setter ? [getterReturnType, setterArgumentType] : [getterReturnType]),
+          (setter && setterContext ? [getterReturnType, setterArgumentType] : [getterReturnType]),
       function(types) {
           var getterReturnType = types[0];
           var desc = {
@@ -3446,7 +3492,7 @@ function dbg(text) {
             enumerable: true
           };
 
-          if (setter) {
+          if (setter && setterContext) {
             setter = embind__requireFunction(setterSignature, setter);
             var setterArgumentType = types[1];
             desc.set = function(v) {
@@ -3457,6 +3503,8 @@ function dbg(text) {
               runDestructors(destructors);
             };
           }
+
+          // console.log('__embind_register_class_property', fieldName, desc);
 
           Object.defineProperty(classType.registeredClass.instancePrototype, fieldName, desc);
           return [];
@@ -3758,28 +3806,8 @@ function dbg(text) {
 
 
   function enumReadValueFromPointer(name, shift, signed) {
-      switch (shift) {
-          case 0:
-          case 0n: return function(pointer) {
-              var heap = signed ? HEAP8 : HEAPU8;
-              const pi = getHeapIndex(pointer);
-              return this['fromWireType'](heap[pi][Number(pointer-HEAP_OFFSET[pi])]);
-          };
-          case 1:
-          case 1n: return function(pointer) {
-              var heap = signed ? HEAP16 : HEAPU16;
-              const pi = getHeapIndex(pointer);
-              return this['fromWireType'](heap[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 1) >>> 0]);
-          };
-          case 2:
-          case 2n: return function(pointer) {
-              var heap = signed ? HEAP32 : HEAPU32;
-              const pi = getHeapIndex(pointer);
-              return this['fromWireType'](heap[pi][(Number(pointer-HEAP_OFFSET[pi]) >>> 2) >>> 0]);
-          };
-          default:
-              throw new TypeError("Unknown integer type: " + name);
-      }
+      // console.log('enumReadValueFromPointer');
+      return this['fromWireType'](readFromMemoryUsingShift(pointer, signed, shift));
     }
 
 
@@ -3843,7 +3871,7 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
     globalThis.__emval_register_symbol = __emval_register_symbol;
 
   function __emval_incref(handle) {
-    //console.log('__emval_incref');
+    // console.log('__emval_incref');
       if (handle > 4) {
         emval_handles.get(handle).refcount += 1;
       }
@@ -3943,19 +3971,12 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
         argsList += (i!==0?", ":"")+"arg"+i; // 'arg0, arg1, ..., argn'
       }
 
-      // The body of the generated function does not have access to enclosing
-      // scope where HEAPU64/HEAPU32/etc are defined, and we cannot pass them
-      // directly as arguments (like we do the Module object) since memory
-      // growth can cause them to be re-bound.
-      var getMemory = () => HEAPU64;
-
       var functionBody =
-          "return function emval_allocator_"+argCount+"(constructor, argTypes, args) {\n" +
-          "  var HEAPU64 = getMemory();\n";
+          "return function emval_allocator_"+argCount+"(constructor, argTypes, args) {\n";
 
       for (var i = 0; i < argCount; ++i) {
           functionBody +=
-              "var argType"+i+" = requireRegisteredType(Number(HEAPU64[((argTypes)>>3)]), 'parameter "+i+"');\n" +
+              "var argType"+i+" = requireRegisteredType(Number(readFromMemoryUsingShift(argTypes, false, 3)), 'parameter "+i+"');\n" +
               "var arg"+i+" = argType"+i+".readValueFromPointer(args);\n" +
               "args += argType"+i+"['argPackAdvance'];\n" +
               "argTypes += 8;\n";
@@ -3966,8 +3987,8 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
           "}\n";
 
       /*jshint evil:true*/
-      return (new Function("requireRegisteredType", "Module", "valueToHandle", "getMemory" , functionBody))(
-          requireRegisteredType, Module, Emval.toHandle, getMemory);
+      return (new Function("requireRegisteredType", "Module", "valueToHandle", "readFromMemoryUsingShift" , functionBody))(
+          requireRegisteredType, Module, Emval.toHandle, readFromMemoryUsingShift);
     }
 
   var emval_newers = {};
@@ -4039,7 +4060,7 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
       returnType = requireRegisteredType(returnType, 'emval::as');
       var destructors = [];
       var rd = Emval.toHandle(destructors);
-      HEAPU64[((destructorsRef)>>3)] = BigInt(rd);
+      writeToMemoryUsingShift(destructorsRef, false, 3, BigInt(rd));
       return returnType['toWireType'](destructors, handle);
     }
     globalThis.__emval_as = __emval_as;
@@ -4102,10 +4123,11 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
     globalThis.__emval_not = __emval_not;
 
   function emval_lookupTypes(argCount, argTypes) {
+    // console.log('emval_lookupTypes');
       var a = new Array(argCount);
       for (var i = 0; i < argCount; ++i) {
-        a[i] = requireRegisteredType(Number(HEAPU64[(((argTypes)+(i * 8))>>3)]),
-                                     "parameter " + i);
+        const memValue = readFromMemoryUsingShift(((argTypes)+(i * 8)), false, 3);
+        a[i] = requireRegisteredType(Number(memValue), "parameter " + i);
       }
       return a;
     }
@@ -4192,8 +4214,9 @@ globalThis.__embind_register_enum_value = __embind_register_enum_value;
     globalThis.__emval_get_method_caller = __emval_get_method_caller;
 
   function emval_allocateDestructors(destructorsRef) {
+    // console.log('emval_allocateDestructors');
       var destructors = [];
-      HEAPU64[((destructorsRef)>>3)] = BigInt(Emval.toHandle(destructors));
+      writeToMemoryUsingShift(destructorsRef, false, 3, BigInt(Emval.toHandle(destructors)));
       return destructors;
     }
 

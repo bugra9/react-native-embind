@@ -3802,6 +3802,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cpp.js@npm:0.6.1":
+  version: 0.6.1
+  resolution: "cpp.js@npm:0.6.1"
+  dependencies:
+    commander: ^9.4.1
+    glob: ^8.0.3
+  bin:
+    cpp.js: src/bin.js
+  checksum: 6bd205c4264aad2992eb4764824dd6a718511ee8ced973b496ec7c697662f2f7b51207ba8920b161312a1f9766009102eb8b0a4048c78f20921d431612282d7b
+  languageName: node
+  linkType: hard
+
 "cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.2, cross-spawn@npm:^7.0.3":
   version: 7.0.3
   resolution: "cross-spawn@npm:7.0.3"
@@ -4913,6 +4925,19 @@ __metadata:
     once: ^1.3.0
     path-is-absolute: ^1.0.0
   checksum: 29452e97b38fa704dabb1d1045350fb2467cf0277e155aa9ff7077e90ad81d1ea9d53d3ee63bd37c05b09a065e90f16aec4a65f5b8de401d1dac40bc5605d133
+  languageName: node
+  linkType: hard
+
+"glob@npm:^8.0.3":
+  version: 8.1.0
+  resolution: "glob@npm:8.1.0"
+  dependencies:
+    fs.realpath: ^1.0.0
+    inflight: ^1.0.4
+    inherits: 2
+    minimatch: ^5.0.1
+    once: ^1.3.0
+  checksum: 92fbea3221a7d12075f26f0227abac435de868dd0736a17170663783296d0dd8d3d532a5672b4488a439bf5d7fb85cdd07c11185d6cd39184f0385cbdfb86a47
   languageName: node
   linkType: hard
 
@@ -7424,6 +7449,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimatch@npm:^5.0.1":
+  version: 5.1.6
+  resolution: "minimatch@npm:5.1.6"
+  dependencies:
+    brace-expansion: ^2.0.1
+  checksum: 7564208ef81d7065a370f788d337cd80a689e981042cb9a1d0e6580b6c6a8c9279eba80010516e258835a988363f99f54a6f711a315089b8b42694f5da9d0d77
+  languageName: node
+  linkType: hard
+
 "minimatch@npm:^9.0.1":
   version: 9.0.3
   resolution: "minimatch@npm:9.0.3"
@@ -8260,30 +8294,31 @@ __metadata:
 
 "react-native-cppjs@file:../react-native-cppjs::locator=sample%40workspace%3A.":
   version: 0.1.0
-  resolution: "react-native-cppjs@file:../react-native-cppjs#../react-native-cppjs::hash=c842d0&locator=sample%40workspace%3A."
+  resolution: "react-native-cppjs@file:../react-native-cppjs#../react-native-cppjs::hash=4bf2f8&locator=sample%40workspace%3A."
   dependencies:
+    cpp.js: 0.6.1
     react-native-embind: "file:../react-native-embind"
   peerDependencies:
     react-native: ^0.72.0
-  checksum: 0c99ee6eb0948301886c6b831d0a1db0daa8eaec8ea6f1a0e95b99fe1b9ca8401c4a1bcb833ea3d580e8198744d3513ff4f5c477eb04f5bcad900d23628562cd
+  checksum: 4d5fde816b7a3e51f8aac9d6c8e5aedc41a54600c362edd432f1efa74caf388b6a6e40ff695f2829611b4f4e42a5ed403a409c200f4202a85d93ecf5ef34fb2e
   languageName: node
   linkType: hard
 
-"react-native-embind@file:../react-native-embind::locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3Dc842d0%26locator%3Dsample%2540workspace%253A.":
+"react-native-embind@file:../react-native-embind::locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3D4bf2f8%26locator%3Dsample%2540workspace%253A.":
   version: 0.1.0
-  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=aac8a4&locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3Dc842d0%26locator%3Dsample%2540workspace%253A."
+  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=96855b&locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3D4bf2f8%26locator%3Dsample%2540workspace%253A."
   peerDependencies:
     react-native: ^0.72.0
-  checksum: f394ff2a8d3160a71cde56d924fe4384d38ae055410fb23de262d31037bf911bc6802ee49924410df5939bce52ab84bde1b0794736544dbb21e3a1d9e52e1d0e
+  checksum: 159e67c09fc6b2a134a76a895e7c3f6d017ad5fd10aa87a032425a4440797ccfe3d8013c6d3429227c22d49327969a88417f4bcc5627adb39b3b45757692de44
   languageName: node
   linkType: hard
 
 "react-native-embind@file:../react-native-embind::locator=sample%40workspace%3A.":
   version: 0.1.0
-  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=aac8a4&locator=sample%40workspace%3A."
+  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=96855b&locator=sample%40workspace%3A."
   peerDependencies:
     react-native: ^0.72.0
-  checksum: f394ff2a8d3160a71cde56d924fe4384d38ae055410fb23de262d31037bf911bc6802ee49924410df5939bce52ab84bde1b0794736544dbb21e3a1d9e52e1d0e
+  checksum: 159e67c09fc6b2a134a76a895e7c3f6d017ad5fd10aa87a032425a4440797ccfe3d8013c6d3429227c22d49327969a88417f4bcc5627adb39b3b45757692de44
   languageName: node
   linkType: hard
 

@@ -27,31 +27,19 @@ import {
 
 import Cppjs from 'react-native-cppjs';
 
-console.log(Cppjs.bugra_a(5));
 const BugraClass = Cppjs.BugraClass;
 const Bugra2Class = Cppjs.Bugra2Class;
 const Bugra3Class = Cppjs.Bugra3Class;
 const z = new BugraClass(7);
-z.b = 4;
-console.log('BugraClass.b2 = ', z.b);
-// console.log('z', z, z.deneme, z.$$);
+z.setB(4);
+console.log('BugraClass.b2 = ', z.getB());
+
 const r = z.deneme(3);
 console.log(r);
-
 console.log(Bugra3Class.oo(2));
 
 const f = new Bugra2Class(6);
-// console.log('===============================');
-// console.log(f, f.$$);
-// console.log('===============================');
 console.log(Bugra3Class.waav(f, 6));
-
-// console.log(Cppjs.Example.sValue());
-
-// var view = new Uint32Array(globalThis.jsiArrayBuffer);
-// console.log(view[10]);
-// console.log(view[20]);
-// console.log(view[30]);
 
 type SectionProps = PropsWithChildren<{
   title: string;

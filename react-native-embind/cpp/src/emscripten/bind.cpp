@@ -3,14 +3,14 @@
 // University of Illinois/NCSA Open Source License.  Both these licenses can be
 // found in the LICENSE file.
 
-#include <./bind.h>
+#include "./bind.h"
 #ifdef USE_CXA_DEMANGLE
 #include <../lib/libcxxabi/include/cxxabi.h>
 #endif
 #include <algorithm>
 #include <climits>
 // #include <emscripten/emscripten.h>
-#include <./wire.h>
+#include "./wire.h"
 #include <limits>
 #include <list>
 #include <typeinfo>
@@ -812,7 +812,7 @@ namespace emscripten {
             FixedBuffer(uint64_t offset) : offset(offset) {}
 
             size_t size() const override {
-                return UINT32_MAX - 63;
+                return UINT32_MAX;
             }
             uint8_t *data() override {
                 return reinterpret_cast<uint8_t *>(offset);
@@ -822,25 +822,26 @@ namespace emscripten {
             uint64_t offset;
         };
 
+
         EMSCRIPTEN_KEEPALIVE void _embind_initialize_bindings(jsi::Runtime& rt) {
             jsRuntime = &rt;
 
-            char* name = "Deneme";
+            char* name = "M";
             uint64_t namePtrNumber = reinterpret_cast<uint64_t>(name);
             // uint64_t offset = (namePtrNumber >> 32) << 32;
-            uint64_t offset = namePtrNumber - UINT32_MAX + 63;
+            uint64_t offset = namePtrNumber - UINT32_MAX;
             auto buf = std::make_shared<FixedBuffer>(offset);
             auto arrayBuffer = facebook::jsi::ArrayBuffer(rt, buf);
             rt.global().setProperty(rt, "jsiArrayBuffer", arrayBuffer);
 
             uint64_t bufPtrNumber = reinterpret_cast<uint64_t>(buf.get());
             // uint64_t offset2 = (bufPtrNumber >> 32) << 32;
-            uint64_t offset2 = bufPtrNumber - UINT32_MAX + 63;
+            uint64_t offset2 = bufPtrNumber - UINT32_MAX;
             auto buf2 = std::make_shared<FixedBuffer>(offset2);
             auto arrayBuffer2 = facebook::jsi::ArrayBuffer(rt, buf2);
             rt.global().setProperty(rt, "jsiArrayBuffer2", arrayBuffer2);
 
-            uint64_t offset3 = offset - UINT32_MAX + 63;
+            uint64_t offset3 = offset - UINT32_MAX;
             auto buf3 = std::make_shared<FixedBuffer>(offset3);
             auto arrayBuffer3 = facebook::jsi::ArrayBuffer(rt, buf3);
             rt.global().setProperty(rt, "jsiArrayBuffer3", arrayBuffer3);
