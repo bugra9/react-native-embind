@@ -18,8 +18,11 @@
 #include <cstdint> // uintptr_t
 #include <vector>
 
+// #include <android/log.h>
+// #define APPNAME "react-native-cppjs"
 
 namespace emscripten {
+    extern facebook::jsi::Runtime* jsRuntime;
 
 class val;
 
@@ -44,7 +47,7 @@ enum {
 
 typedef struct _EM_DESTRUCTORS* EM_DESTRUCTORS;
 typedef struct _EM_METHOD_CALLER* EM_METHOD_CALLER;
-typedef double EM_GENERIC_WIRE_TYPE;
+typedef facebook::jsi::Value EM_GENERIC_WIRE_TYPE;
 typedef const void* EM_VAR_ARGS;
 
 void _emval_incref(EM_VAL value);
@@ -156,20 +159,23 @@ private:
 
 template<typename WireType>
 struct GenericWireTypeConverter {
-  static WireType from(double wt) {
-    return static_cast<WireType>(wt);
+  static WireType from(facebook::jsi::Value& wt) {
+    return BindingType<WireType>::fromWireType2(*jsRuntime, wt);
   }
 };
 
 template<typename Pointee>
 struct GenericWireTypeConverter<Pointee*> {
-  static Pointee* from(double wt) {
-    return reinterpret_cast<Pointee*>(static_cast<uintptr_t>(wt));
+  static Pointee* from(facebook::jsi::Value& wt) {
+    return reinterpret_cast<Pointee*>(wt.asBigInt(*jsRuntime).asUint64(*jsRuntime));
   }
 };
 
 template<typename T>
-T fromGenericWireType(double g) {
+T fromGenericWireType(facebook::jsi::Value& g) {
+    if constexpr (std::is_same<T, std::string>::value) {
+        return g.getString(*jsRuntime).utf8(*jsRuntime);
+    }
   typedef typename BindingType<T>::WireType WireType;
   WireType wt = GenericWireTypeConverter<WireType>::from(g);
   return BindingType<T>::fromWireType(wt);
@@ -226,9 +232,9 @@ inline void writeGenericWireType(GenericWireType*& cursor, uint64_t wt) {
 
 template<typename T>
 void writeGenericWireType(GenericWireType*& cursor, T* wt) {
-  uintptr_t short_ptr = reinterpret_cast<uintptr_t>(wt);
-  assert(short_ptr <= UINT32_MAX);
-  cursor->w[0].p = short_ptr;
+  uint64_t short_ptr = reinterpret_cast<uint64_t>(wt);
+  // assert(short_ptr <= UINT32_MAX);
+  cursor->u = short_ptr;
   ++cursor;
 }
 
@@ -380,7 +386,7 @@ public:
     return val(e);
   }
 
-  static val global(const char* name = 0) {
+  static val global(const char* name = "") {
     return val(internal::_emval_get_global(name));
   }
 
@@ -634,6 +640,8 @@ namespace internal {
 template<>
 struct BindingType<val> {
   typedef EM_VAL WireType;
+  typedef const facebook::jsi::Value WireType2;
+
   static WireType toWireType(const val& v) {
     _emval_incref(v.handle);
     return v.handle;
@@ -641,6 +649,16 @@ struct BindingType<val> {
   static val fromWireType(WireType v) {
     return val::take_ownership(v);
   }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, const val& v) {
+        _emval_incref(v.handle);
+        return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(v.handle));
+    }
+    static val fromWireType2(facebook::jsi::Runtime& rt, WireType2& v) {
+      // return val::undefined();
+        // return val::take_ownership(reinterpret_cast<EM_VAL>((int) v.getNumber()));
+        return val::take_ownership(reinterpret_cast<EM_VAL>(v.asBigInt(rt).asUint64(rt)));
+    }
 };
 
 }

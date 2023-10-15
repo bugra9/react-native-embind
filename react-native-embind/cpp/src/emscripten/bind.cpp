@@ -127,7 +127,8 @@ namespace emscripten {
         }
 
         template<> inline EM_VAL Bugra<EM_VAL>::fromValue(jsi::Value& rawValue) {
-            return reinterpret_cast<EM_VAL>((uint32_t) rawValue.getNumber());
+            return reinterpret_cast<EM_VAL>(rawValue.asBigInt(*jsRuntime).asUint64(*jsRuntime));
+            // return reinterpret_cast<EM_VAL>((uint32_t) rawValue.getNumber());
         }
 
         template<> inline jsi::Value Bugra<EM_METHOD_CALLER>::toValue(EM_METHOD_CALLER rawValue) {
@@ -144,6 +145,12 @@ namespace emscripten {
 
 
 
+        void _emval_register_symbol(const char* value) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__emval_register_symbol").call(
+                    *jsRuntime,
+                    Bugra<const char*>::toValue(value)
+            );
+        }
 
         void _emval_incref(EM_VAL value) {
             jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__emval_incref").call(
@@ -252,7 +259,7 @@ namespace emscripten {
                     Bugra<TYPEID>::toValue(returnType),
                     Bugra<EM_DESTRUCTORS*>::toValue(destructors)
             );
-            return Bugra<EM_GENERIC_WIRE_TYPE>::fromValue(response);
+            return response;
         }
         int64_t _emval_as_int64(EM_VAL value, TYPEID returnType) {
             auto response = jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__emval_as_int64").call(
@@ -336,7 +343,7 @@ namespace emscripten {
                     Bugra<EM_DESTRUCTORS*>::toValue(destructors),
                     Bugra<EM_VAR_ARGS>::toValue(argv)
             );
-            return Bugra<EM_GENERIC_WIRE_TYPE>::fromValue(response);
+            return response;
         }
         void _emval_call_void_method(EM_METHOD_CALLER caller, EM_VAL handle, const char* methodName, EM_VAR_ARGS argv) {
             jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__emval_call_void_method").call(
@@ -406,6 +413,14 @@ namespace emscripten {
                     Bugra<TYPEID>::toValue(voidType),
                     Bugra<const char*>::toValue(name)
                     );
+        }
+
+        void _embind_register_jsiValue(TYPEID jsiValueType, const char *name) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_jsiValue").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(jsiValueType),
+                    Bugra<const char*>::toValue(name)
+            );
         }
 
         void _embind_register_bool(TYPEID boolType, const char *name, size_t size, bool trueValue,
@@ -525,10 +540,10 @@ namespace emscripten {
                 TYPEID tupleType,
                 const char *name,
                 const char *constructorSignature,
-                GenericFunction constructor,
+                facebook::jsi::Function& constructor,
                 const char *destructorSignature,
-                GenericFunction destructor) {
-            /* jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_array").call(
+                facebook::jsi::Function& destructor) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_array").call(
                     *jsRuntime,
                     Bugra<TYPEID>::toValue(tupleType),
                     Bugra<const char*>::toValue(name),
@@ -536,34 +551,56 @@ namespace emscripten {
                     constructor,
                     Bugra<const char*>::toValue(destructorSignature),
                     destructor
-                    ); */
+                    );
         }
 
         void _embind_register_value_array_element(
                 TYPEID tupleType,
                 TYPEID getterReturnType,
                 const char *getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 void *getterContext,
                 TYPEID setterArgumentType,
                 const char *setterSignature,
-                GenericFunction setter,
+                facebook::jsi::Function& setter,
                 void *setterContext) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_array_element").call(*jsRuntime, tupleType, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_array_element").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(tupleType),
+                    Bugra<TYPEID>::toValue(getterReturnType),
+                    Bugra<const char*>::toValue(getterSignature),
+                    getter,
+                    Bugra<GenericFunction>::toValue(getterContext),
+                    Bugra<TYPEID>::toValue(setterArgumentType),
+                    Bugra<const char*>::toValue(setterSignature),
+                    setter,
+                    Bugra<GenericFunction>::toValue(setterContext)
+                    );
         }
 
         void _embind_finalize_value_array(TYPEID tupleType) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_finalize_value_array").call(*jsRuntime, tupleType);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_finalize_value_array").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(tupleType)
+                    );
         }
 
         void _embind_register_value_object(
                 TYPEID structType,
                 const char *fieldName,
                 const char *constructorSignature,
-                GenericFunction constructor,
+                facebook::jsi::Function& constructor,
                 const char *destructorSignature,
-                GenericFunction destructor) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_object").call(*jsRuntime, structType, fieldName, constructorSignature, constructor, destructorSignature, destructor);
+                facebook::jsi::Function& destructor) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_object").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(structType),
+                    Bugra<const char*>::toValue(fieldName),
+                    Bugra<const char*>::toValue(constructorSignature),
+                    constructor,
+                    Bugra<const char*>::toValue(destructorSignature),
+                    destructor
+                    );
         }
 
         void _embind_register_value_object_field(
@@ -571,17 +608,32 @@ namespace emscripten {
                 const char *fieldName,
                 TYPEID getterReturnType,
                 const char *getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 void *getterContext,
                 TYPEID setterArgumentType,
                 const char *setterSignature,
-                GenericFunction setter,
+                facebook::jsi::Function& setter,
                 void *setterContext) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_object_field").call(*jsRuntime, structType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_value_object_field").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(structType),
+                    Bugra<const char*>::toValue(fieldName),
+                    Bugra<TYPEID>::toValue(getterReturnType),
+                    Bugra<const char*>::toValue(getterSignature),
+                    getter,
+                    Bugra<GenericFunction>::toValue(getterContext),
+                    Bugra<TYPEID>::toValue(setterArgumentType),
+                    Bugra<const char*>::toValue(setterSignature),
+                    setter,
+                    Bugra<GenericFunction>::toValue(setterContext)
+                    );
         }
 
         void _embind_finalize_value_object(TYPEID structType) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_finalize_value_object").call(*jsRuntime, structType);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_finalize_value_object").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(structType)
+                    );
         }
 
         void _embind_register_class(
@@ -710,19 +762,35 @@ namespace emscripten {
                 TYPEID classType,
                 const char *fieldName,
                 TYPEID fieldType,
-                const void *fieldContext,
+                void *fieldContext,
                 const char *getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 const char *setterSignature,
-                GenericFunction setter) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_class_class_property").call(*jsRuntime, classType, fieldName, fieldType, fieldContext, getterSignature, getter, setterSignature, setter);
+                facebook::jsi::Function& setter) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_class_class_property").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(classType),
+                    Bugra<const char*>::toValue(fieldName),
+                    Bugra<TYPEID>::toValue(fieldType),
+                    Bugra<GenericFunction>::toValue(fieldContext),
+                    Bugra<const char*>::toValue(getterSignature),
+                    getter,
+                    Bugra<const char*>::toValue(setterSignature),
+                    setter
+                    );
         }
 
         EM_VAL _embind_create_inheriting_constructor(
                 const char *constructorName,
                 TYPEID wrapperType,
                 EM_VAL properties) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_create_inheriting_constructor").call(*jsRuntime, constructorName, wrapperType, properties);
+            auto response = jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_create_inheriting_constructor").call(
+                    *jsRuntime,
+                    Bugra<const char*>::toValue(constructorName),
+                    Bugra<TYPEID>::toValue(wrapperType),
+                    Bugra<EM_VAL>::toValue(properties)
+                    );
+            return Bugra<EM_VAL>::fromValue(response);
         }
 
         void _embind_register_enum(
@@ -730,7 +798,13 @@ namespace emscripten {
                 const char *name,
                 size_t size,
                 bool isSigned) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_enum").call(*jsRuntime, enumType, name, size, isSigned);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_enum").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(enumType),
+                    Bugra<const char*>::toValue(name),
+                    Bugra<int32_t>::toValue((int32_t) size),
+                    Bugra<bool>::toValue(isSigned)
+                    );
         }
 
         void _embind_register_smart_ptr(
@@ -766,14 +840,24 @@ namespace emscripten {
                 TYPEID enumType,
                 const char *valueName,
                 GenericEnumValue value) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_enum_value").call(*jsRuntime, enumType, valueName);
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_enum_value").call(
+                    *jsRuntime,
+                    Bugra<TYPEID>::toValue(enumType),
+                    Bugra<const char*>::toValue(valueName),
+                    Bugra<GenericEnumValue>::toValue(value)
+                    );
         }
 
         void _embind_register_constant(
                 const char *name,
                 TYPEID constantType,
-                double value) {
-            // jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_constant").call(*jsRuntime, name, constantType, value);
+                const facebook::jsi::Value value) {
+            jsRuntime->global().getPropertyAsFunction(*jsRuntime, "__embind_register_constant").call(
+                    *jsRuntime,
+                    Bugra<const char*>::toValue(name),
+                    Bugra<TYPEID>::toValue(constantType),
+                    value
+                    );
         }
 
         const char *EMSCRIPTEN_KEEPALIVE __getTypeName(const std::type_info *ti) {
@@ -927,6 +1011,7 @@ EMSCRIPTEN_BINDINGS(builtin) {
   using namespace emscripten::internal;
 
   _embind_register_void(TypeID<void>::get(), "void");
+  _embind_register_jsiValue(TypeID<facebook::jsi::Value>::get(), "jsiValue");
 
   _embind_register_bool(TypeID<bool>::get(), "bool", sizeof(bool), true, false);
 
@@ -983,4 +1068,13 @@ EMSCRIPTEN_BINDINGS(builtin) {
 
   register_memory_view<float>("emscripten::memory_view<float>");
   register_memory_view<double>("emscripten::memory_view<double>");
+
+    // register_vector<bool>("BoolVector");
+    register_vector<char>("CharVector");
+    register_vector<short>("ShortVector");
+    register_vector<int>("IntVector");
+    register_vector<int64_t>("Int64_tVector");
+    register_vector<float>("FloatVector");
+    register_vector<double>("DoubleVector");
+    register_vector<std::string>("StringVector");
 }

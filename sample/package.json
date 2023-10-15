@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "assert": "2.1.0",
     "react": "18.2.0",
     "react-native": "0.72.0",
     "react-native-cppjs": "file:../react-native-cppjs",

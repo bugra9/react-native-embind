@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <string>
 
 int bugra_a(int a);
 
@@ -25,4 +27,6 @@ class Bugra3Class {
 public:
     static int waav(std::shared_ptr<BugraClass>& b, int a);
     static int oo(int d);
+    static std::vector<int> getIntVector();
+    static std::vector<std::string> getStringVector();
 };

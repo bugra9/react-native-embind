@@ -116,19 +116,19 @@ namespace emscripten {
                 TYPEID tupleType,
                 const char* name,
                 const char* constructorSignature,
-                GenericFunction constructor,
+                facebook::jsi::Function& constructor,
                 const char* destructorSignature,
-                GenericFunction destructor);
+                facebook::jsi::Function& destructor);
 
         void _embind_register_value_array_element(
                 TYPEID tupleType,
                 TYPEID getterReturnType,
                 const char* getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 void* getterContext,
                 TYPEID setterArgumentType,
                 const char* setterSignature,
-                GenericFunction setter,
+                facebook::jsi::Function& setter,
                 void* setterContext);
 
         void _embind_finalize_value_array(TYPEID tupleType);
@@ -137,20 +137,20 @@ namespace emscripten {
                 TYPEID structType,
                 const char* fieldName,
                 const char* constructorSignature,
-                GenericFunction constructor,
+                facebook::jsi::Function& constructor,
                 const char* destructorSignature,
-                GenericFunction destructor);
+                facebook::jsi::Function& destructor);
 
         void _embind_register_value_object_field(
                 TYPEID structType,
                 const char* fieldName,
                 TYPEID getterReturnType,
                 const char* getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 void* getterContext,
                 TYPEID setterArgumentType,
                 const char* setterSignature,
-                GenericFunction setter,
+                facebook::jsi::Function& setter,
                 void* setterContext);
 
         void _embind_finalize_value_object(TYPEID structType);
@@ -215,11 +215,11 @@ namespace emscripten {
                 TYPEID classType,
                 const char* fieldName,
                 TYPEID fieldType,
-                const void* fieldContext,
+                void* fieldContext,
                 const char* getterSignature,
-                GenericFunction getter,
+                facebook::jsi::Function& getter,
                 const char* setterSignature,
-                GenericFunction setter);
+                facebook::jsi::Function& setter);
 
         EM_VAL _embind_create_inheriting_constructor(
                 const char* constructorName,
@@ -254,7 +254,7 @@ namespace emscripten {
         void _embind_register_constant(
                 const char* name,
                 TYPEID constantType,
-                double value);
+                const facebook::jsi::Value value);
 
 // Register an InitFunc in the global linked list of init functions.
         void _embind_register_bindings(struct InitFunc* f);
@@ -461,19 +461,31 @@ struct allow_raw_pointer {
         template<typename T, typename... Policies>
         using maybe_wrap_async = typename std::conditional<
                 isAsync<Policies...>::value,
-                async::Wrapper<decltype(&T::invoke), &T::invoke>,
+                async::Wrapper<decltype(&T::invoke2), &T::invoke2>,
                 T
         >::type;
 
         template<typename FunctorType, typename ReturnType, typename... Args>
         struct FunctorInvoker {
-            static typename internal::BindingType<ReturnType>::WireType2 invoke(
+            static typename internal::BindingType<ReturnType>::WireType invoke(
                     FunctorType& function,
-                    typename internal::BindingType<Args>::WireType2... args
+                    typename internal::BindingType<Args>::WireType... args
             ) {
                 return internal::BindingType<ReturnType>::toWireType(
                         function(
                                 internal::BindingType<Args>::fromWireType(args)...)
+                );
+            }
+
+            static typename internal::BindingType<ReturnType>::WireType2 invoke2(
+                    facebook::jsi::Runtime& rt,
+                    FunctorType& function,
+                    typename internal::BindingType<Args>::WireType2&... args
+            ) {
+                return internal::BindingType<ReturnType>::toWireType2(
+                        rt,
+                        function(
+                                internal::BindingType<Args>::fromWireType2(rt, args)...)
                 );
             }
         };
@@ -486,6 +498,15 @@ struct allow_raw_pointer {
             ) {
                 function(
                         internal::BindingType<Args>::fromWireType(args)...);
+            }
+
+            static void invoke2(
+                    facebook::jsi::Runtime& rt,
+                    FunctorType& function,
+                    typename internal::BindingType<Args>::WireType2&... args
+            ) {
+                function(
+                        internal::BindingType<Args>::fromWireType2(rt, args)...);
             }
         };
 
@@ -595,6 +616,11 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
     else if constexpr (count == 8) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]); }\
     else if constexpr (count == 9) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]); }\
     else if constexpr (count == 10) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]); }\
+    else if constexpr (count == 11) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]); }\
+    else if constexpr (count == 12) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]); }\
+    else if constexpr (count == 13) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]); }\
+    else if constexpr (count == 14) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]); }\
+    else if constexpr (count == 15) { return invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]); }\
     else { return invokeVar(rt, fnVar); }                                              \
 })
 
@@ -609,6 +635,11 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
     else if constexpr (count == 8) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]); }\
     else if constexpr (count == 9) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]); }\
     else if constexpr (count == 10) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]); }\
+    else if constexpr (count == 11) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]); }\
+    else if constexpr (count == 12) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]); }\
+    else if constexpr (count == 13) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]); }\
+    else if constexpr (count == 14) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]); }\
+    else if constexpr (count == 15) { invokeVar(rt, fnVar, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]); }\
     else { invokeVar(rt, fnVar); }                                              \
 })
 
@@ -654,10 +685,10 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
 
         template<typename ClassType, typename... Args>
         ClassType* raw_constructor(
-                typename internal::BindingType<Args>::WireType... args
+                typename internal::BindingType<Args>::WireType2&... args
         ) {
             return new ClassType(
-                    internal::BindingType<Args>::fromWireType(args)...
+                    internal::BindingType<Args>::fromWireType2(*jsRuntime, args)...
             );
         }
 
@@ -679,6 +710,20 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                                 internal::BindingType<Args>::fromWireType(args)...)
                 );
             }
+
+            static typename internal::BindingType<ReturnType>::WireType2 invoke2(
+                    facebook::jsi::Runtime& rt,
+                    FunctionPointerType* function,
+                    typename internal::BindingType<ThisType>::WireType2& wireThis,
+                    typename internal::BindingType<Args>::WireType2&... args
+            ) {
+                return internal::BindingType<ReturnType>::toWireType2(
+                        rt,
+                        (*function)(
+                                internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
+                                internal::BindingType<Args>::fromWireType2(rt, args)...)
+                );
+            }
         };
 
         template<typename FunctionPointerType, typename ThisType, typename... Args>
@@ -691,6 +736,17 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
                 (*function)(
                         internal::BindingType<ThisType>::fromWireType(wireThis),
                         internal::BindingType<Args>::fromWireType(args)...);
+            }
+
+            static void invoke2(
+                    facebook::jsi::Runtime& rt,
+                    FunctionPointerType* function,
+                    typename internal::BindingType<ThisType>::WireType2& wireThis,
+                    typename internal::BindingType<Args>::WireType2&... args
+            ) {
+                (*function)(
+                        internal::BindingType<ThisType>::fromWireType2(rt, wireThis),
+                        internal::BindingType<Args>::fromWireType2(rt, args)...);
             }
         };
 
@@ -787,7 +843,7 @@ struct SignatureTranslator<ReturnType (*)(Args...)> { using type = void*; };
             static void setWire2(
                     const MemberPointer& field,
                     ClassType& ptr,
-                    WireType2 value
+                    WireType2& value
             ) {
                 ptr.*field = MemberBinding::fromWireType2(*jsRuntime, value);
             }
@@ -1032,7 +1088,7 @@ static void set(const Context& context, ClassType& ptr, WireType wt) {
 
 template<typename ClassType>
 static void set2(const Context& context, ClassType& ptr, WireType2& wt) {
-    context(ptr, Binding::fromWireType2(wt));
+    context(ptr, Binding::fromWireType2(*jsRuntime, wt));
 }
 
 static void* getContext(const Context& context) {
@@ -1050,13 +1106,13 @@ private:
 };
 
 template<typename ClassType, typename ElementType>
-typename BindingType<ElementType>::WireType get_by_index(int index, ClassType& ptr) {
-    return BindingType<ElementType>::toWireType(ptr[index]);
+typename BindingType<ElementType>::WireType2 get_by_index(int index, ClassType& ptr) {
+    return BindingType<ElementType>::toWireType2(*jsRuntime, ptr[index]);
 }
 
 template<typename ClassType, typename ElementType>
-void set_by_index(int index, ClassType& ptr, typename BindingType<ElementType>::WireType wt) {
-    ptr[index] = BindingType<ElementType>::fromWireType(wt);
+void set_by_index(int index, ClassType& ptr, typename BindingType<ElementType>::WireType2& wt) {
+    ptr[index] = BindingType<ElementType>::fromWireType2(*jsRuntime, wt);
 }
 
 } // end namespace internal
@@ -1079,13 +1135,33 @@ public:
 
         auto constructor = &raw_constructor<ClassType>;
         auto destructor = &raw_destructor<ClassType>;
+
+        facebook::jsi::Function constructorJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_constructor"),
+                0,
+                [constructor](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t = constructor();
+                    return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(t));
+                });
+
+        facebook::jsi::Function destructorJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_constructor"),
+                1,
+                [destructor](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t = reinterpret_cast<ClassType*>(args[0].asBigInt(rt).asUint64(rt));
+                    destructor(t);
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_value_array(
                 TypeID<ClassType>::get(),
                 name,
                 getSignature(constructor),
-                reinterpret_cast<GenericFunction>(constructor),
+                constructorJSIFunc,
                 getSignature(destructor),
-                reinterpret_cast<GenericFunction>(destructor));
+                destructorJSIFunc);
     }
 
     ~value_array() {
@@ -1098,19 +1174,38 @@ public:
         using namespace internal;
 
         auto getter = &MemberAccess<InstanceType, ElementType>
-        ::template getWire<ClassType>;
+        ::template getWire2<ClassType>;
         auto setter = &MemberAccess<InstanceType, ElementType>
-        ::template setWire<ClassType>;
+        ::template setWire2<ClassType>;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_gter1"),
+                2,
+                [getter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return getter(field, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_ster1"),
+                3,
+                [setter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    setter(field, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
 
         _embind_register_value_array_element(
                 TypeID<ClassType>::get(),
                 TypeID<ElementType>::get(),
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 getContext(field),
                 TypeID<ElementType>::get(),
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter),
+                setterJSIFunc,
                 getContext(field));
         return *this;
     }
@@ -1121,18 +1216,39 @@ public:
         typedef GetterPolicy<Getter> GP;
         typedef SetterPolicy<Setter> SP;
 
-        auto g = &GP::template get<ClassType>;
-        auto s = &SP::template set<ClassType>;
+        auto g = &GP::template get2<ClassType>;
+        auto s = &SP::template set2<ClassType>;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_gter2"),
+                2,
+                [g, getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    Getter* t = reinterpret_cast<Getter*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return g(getter, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_ster2"),
+                3,
+                [s](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    Setter* t = reinterpret_cast<Setter*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    s(*t, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
 
         _embind_register_value_array_element(
                 TypeID<ClassType>::get(),
                 TypeID<typename GP::ReturnType>::get(),
                 getSignature(g),
-                reinterpret_cast<GenericFunction>(g),
+                getterJSIFunc,
                 GP::getContext(getter),
                 TypeID<typename SP::ArgumentType>::get(),
                 getSignature(s),
-                reinterpret_cast<GenericFunction>(s),
+                setterJSIFunc,
                 SP::getContext(setter));
         return *this;
     }
@@ -1145,15 +1261,37 @@ public:
         auto getter = &internal::get_by_index<ClassType, ElementType>;
         auto setter = &internal::set_by_index<ClassType, ElementType>;
 
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_gter3"),
+                2,
+                [getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    int t1 = static_cast<int>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return getter(t1, *t2);
+                });
+
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_array_element_ster3"),
+                3,
+                [setter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    int t1 = static_cast<int>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    setter(t1, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_value_array_element(
                 TypeID<ClassType>::get(),
                 TypeID<ElementType>::get(),
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 reinterpret_cast<void*>(Index),
                 TypeID<ElementType>::get(),
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter),
+                setterJSIFunc,
                 reinterpret_cast<void*>(Index));
         return *this;
     }
@@ -1174,13 +1312,32 @@ public:
         auto ctor = &raw_constructor<ClassType>;
         auto dtor = &raw_destructor<ClassType>;
 
+        facebook::jsi::Function constructorJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_constructor"),
+                0,
+                [ctor](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t = ctor();
+                    return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(t));
+                });
+
+        facebook::jsi::Function destructorJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_constructor"),
+                1,
+                [dtor](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t = reinterpret_cast<ClassType*>(args[0].asBigInt(rt).asUint64(rt));
+                    dtor(t);
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_value_object(
                 TypeID<ClassType>::get(),
                 name,
                 getSignature(ctor),
-                reinterpret_cast<GenericFunction>(ctor),
+                constructorJSIFunc,
                 getSignature(dtor),
-                reinterpret_cast<GenericFunction>(dtor));
+                destructorJSIFunc);
     }
 
     ~value_object() {
@@ -1193,20 +1350,39 @@ public:
         using namespace internal;
 
         auto getter = &MemberAccess<InstanceType, FieldType>
-        ::template getWire<ClassType>;
+        ::template getWire2<ClassType>;
         auto setter = &MemberAccess<InstanceType, FieldType>
-        ::template setWire<ClassType>;
+        ::template setWire2<ClassType>;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_gter1"),
+                2,
+                [getter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return getter(field, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_ster1"),
+                3,
+                [setter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    setter(field, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
 
         _embind_register_value_object_field(
                 TypeID<ClassType>::get(),
                 fieldName,
                 TypeID<FieldType>::get(),
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 getContext(field),
                 TypeID<FieldType>::get(),
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter),
+                setterJSIFunc,
                 getContext(field));
         return *this;
     }
@@ -1219,20 +1395,43 @@ public:
         static_assert(sizeof(FieldType) == sizeof(ElementType[N]));
 
         auto getter = &MemberAccess<InstanceType, FieldType>
-        ::template getWire<ClassType>;
+        ::template getWire2<ClassType>;
         auto setter = &MemberAccess<InstanceType, FieldType>
-        ::template setWire<ClassType>;
+        ::template setWire2<ClassType>;
+
+        typedef FieldType InstanceType::*MemberPointer;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_gter1"),
+                2,
+                [getter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    const MemberPointer* t1 = reinterpret_cast<MemberPointer*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return getter(*t1, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_ster1"),
+                3,
+                [setter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    const MemberPointer* t1 = reinterpret_cast<MemberPointer*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    setter(*t1, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
 
         _embind_register_value_object_field(
                 TypeID<ClassType>::get(),
                 fieldName,
                 TypeID<FieldType>::get(),
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 getContext(field),
                 TypeID<FieldType>::get(),
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter),
+                setterJSIFunc,
                 getContext(field));
         return *this;
     }
@@ -1247,19 +1446,40 @@ public:
         typedef GetterPolicy<Getter> GP;
         typedef SetterPolicy<Setter> SP;
 
-        auto g = &GP::template get<ClassType>;
-        auto s = &SP::template set<ClassType>;
+        auto g = &GP::template get2<ClassType>;
+        auto s = &SP::template set2<ClassType>;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_gter2"),
+                2,
+                [g, getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    Getter* t = reinterpret_cast<Getter*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return g(getter, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_ster2"),
+                3,
+                [s](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    Setter* t = reinterpret_cast<Setter*>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    s(*t, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
 
         _embind_register_value_object_field(
                 TypeID<ClassType>::get(),
                 fieldName,
                 TypeID<typename GP::ReturnType>::get(),
                 getSignature(g),
-                reinterpret_cast<GenericFunction>(g),
+                getterJSIFunc,
                 GP::getContext(getter),
                 TypeID<typename SP::ArgumentType>::get(),
                 getSignature(s),
-                reinterpret_cast<GenericFunction>(s),
+                setterJSIFunc,
                 SP::getContext(setter));
         return *this;
     }
@@ -1273,16 +1493,37 @@ public:
         auto getter = &internal::get_by_index<ClassType, ElementType>;
         auto setter = &internal::set_by_index<ClassType, ElementType>;
 
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_gter3"),
+                2,
+                [getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    int t1 = static_cast<int>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    return getter(t1, *t2);
+                });
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, "value_object_element_ster3"),
+                3,
+                [setter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    int t1 = static_cast<int>(args[0].asBigInt(rt).asUint64(rt));
+                    ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
+                    setter(t1, *t2, args[2]);
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_value_object_field(
                 TypeID<ClassType>::get(),
                 fieldName,
                 TypeID<ElementType>::get(),
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 reinterpret_cast<void*>(Index),
                 TypeID<ElementType>::get(),
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter),
+                setterJSIFunc,
                 reinterpret_cast<void*>(Index));
         return *this;
     }
@@ -1529,13 +1770,27 @@ namespace internal {
         template <typename ClassType, typename... Policies>
         static void invoke(ReturnType (*factory)(Args...)) {
             typename WithPolicies<allow_raw_pointers, Policies...>::template ArgTypeList<ReturnType, Args...> args;
-            auto invoke = &Invoker<ReturnType, Args...>::invoke;
+            auto invoke = &Invoker<ReturnType, Args...>::invoke2;
+
+            facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                    *jsRuntime,
+                    facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string("RegisterClassConstructor_invoke_")+getSignature(invoke)),
+                    args.getCount() - 1,
+                    [invoke, factory](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                        if constexpr (std::is_same<ReturnType, void>::value) {
+                        callInvokeVoid(sizeof...(Args), invoke, factory);
+                        return nullptr;
+                    } else {
+                        callInvoke(sizeof...(Args), invoke, factory);
+                    }
+                    });
+
             _embind_register_class_constructor(
                     TypeID<ClassType>::get(),
                     args.getCount(),
                     args.getTypes(),
                     getSignature(invoke),
-                    reinterpret_cast<GenericFunction>(invoke),
+                    invokeJSIFunc,
                     reinterpret_cast<GenericFunction>(factory));
         }
     };
@@ -1546,13 +1801,27 @@ namespace internal {
     template <typename ClassType, typename... Policies>
     static void invoke(std::function<ReturnType (Args...)> factory) {
         typename WithPolicies<Policies...>::template ArgTypeList<ReturnType, Args...> args;
-        auto invoke = &FunctorInvoker<decltype(factory), ReturnType, Args...>::invoke;
+        auto invoke = &FunctorInvoker<decltype(factory), ReturnType, Args...>::invoke2;
+
+        facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string("RegisterClassConstructor_invoke_")+getSignature(invoke)),
+                args.getCount() - 1,
+                [invoke, factory](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    if constexpr (std::is_same<ReturnType, void>::value) {
+                        callInvokeVoid(sizeof...(Args), invoke, factory);
+                        return nullptr;
+                    } else {
+                        callInvoke(sizeof...(Args), invoke, factory);
+                    }
+                });
+
         _embind_register_class_constructor(
                 TypeID<ClassType>::get(),
                 args.getCount(),
                 args.getTypes(),
                 getSignature(invoke),
-                reinterpret_cast<GenericFunction>(invoke),
+                invokeJSIFunc,
                 reinterpret_cast<GenericFunction>(getContext(factory)));
     }
 };
@@ -1563,13 +1832,27 @@ struct RegisterClassConstructor<ReturnType (Args...)> {
     template <typename ClassType, typename Callable, typename... Policies>
     static void invoke(Callable& factory) {
         typename WithPolicies<Policies...>::template ArgTypeList<ReturnType, Args...> args;
-        auto invoke = &FunctorInvoker<decltype(factory), ReturnType, Args...>::invoke;
+        auto invoke = &FunctorInvoker<decltype(factory), ReturnType, Args...>::invoke2;
+
+        facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string("RegisterClassConstructor_invoke_")+getSignature(invoke)),
+                args.getCount() - 1,
+                [invoke, factory](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    if constexpr (std::is_same<ReturnType, void>::value) {
+                        callInvokeVoid(sizeof...(Args), invoke, getContext(factory));
+                        return nullptr;
+                    } else {
+                        callInvoke(sizeof...(Args), invoke, getContext(factory));
+                    }
+                });
+
         _embind_register_class_constructor(
                 TypeID<ClassType>::get(),
                 args.getCount(),
                 args.getTypes(),
                 getSignature(invoke),
-                reinterpret_cast<GenericFunction>(invoke),
+                invokeJSIFunc,
                 reinterpret_cast<GenericFunction>(getContext(factory)));
     }
 };
@@ -1673,18 +1956,32 @@ template<typename ReturnType, typename ThisType, typename... Args>
 struct RegisterClassMethod<ReturnType (*)(ThisType, Args...)> {
 
     template <typename ClassType, typename... Policies>
-    static void invoke(const char* methodName,
+    static void invoke(facebook::jsi::Runtime* rt, const char* methodName,
                        ReturnType (*function)(ThisType, Args...)) {
         typename WithPolicies<Policies...>::template ArgTypeList<ReturnType, ThisType, Args...> args;
         using OriginalInvoker = FunctionInvoker<decltype(function), ReturnType, ThisType, Args...>;
-        auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke;
+        auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke2;
+
+        facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *rt,
+                facebook::jsi::PropNameID::forAscii(*rt, std::string(methodName)+"_"+getSignature(invoke)),
+                args.getCount() + 1,
+                [invoke, function](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    if constexpr (std::is_same<ReturnType, void>::value) {
+                        callInvokeVoid(sizeof...(Args) + 1, invoke, getContext(function));
+                        return nullptr;
+                    } else {
+                        callInvoke(sizeof...(Args) + 1, invoke, getContext(function));
+                    }
+                });
+
         _embind_register_class_function(
                 TypeID<ClassType>::get(),
                 methodName,
                 args.getCount(),
                 args.getTypes(),
                 getSignature(invoke),
-                reinterpret_cast<GenericFunction>(invoke),
+                invokeJSIFunc,
                 getContext(function),
                 false,
                 isAsync<Policies...>::value);
@@ -1701,18 +1998,32 @@ template<typename ReturnType, typename ThisType, typename... Args>
 struct RegisterClassMethod<std::function<ReturnType (ThisType, Args...)>> {
 
 template <typename ClassType, typename... Policies>
-static void invoke(const char* methodName,
+static void invoke(facebook::jsi::Runtime* rt, const char* methodName,
                    std::function<ReturnType (ThisType, Args...)> function) {
     typename WithPolicies<Policies...>::template ArgTypeList<ReturnType, ThisType, Args...> args;
     using OriginalInvoker = FunctorInvoker<decltype(function), ReturnType, ThisType, Args...>;
-    auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke;
+    auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke2;
+
+    facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+            *rt,
+            facebook::jsi::PropNameID::forAscii(*rt, std::string(methodName)+"_"+getSignature(invoke)),
+            args.getCount() + 1,
+            [invoke, function](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                if constexpr (std::is_same<ReturnType, void>::value) {
+                callInvokeVoid(sizeof...(Args) + 1, invoke, function);
+                return nullptr;
+            } else {
+                callInvoke(sizeof...(Args) + 1, invoke, function);
+            }
+            });
+
     _embind_register_class_function(
             TypeID<ClassType>::get(),
             methodName,
             args.getCount(),
             args.getTypes(),
             getSignature(invoke),
-            reinterpret_cast<GenericFunction>(invoke),
+            invokeJSIFunc,
             getContext(function),
             false,
             isAsync<Policies...>::value);
@@ -1723,18 +2034,32 @@ template<typename ReturnType, typename ThisType, typename... Args>
 struct RegisterClassMethod<ReturnType (ThisType, Args...)> {
 
     template <typename ClassType, typename Callable, typename... Policies>
-    static void invoke(const char* methodName,
+    static void invoke(facebook::jsi::Runtime* rt, const char* methodName,
                        Callable& callable) {
         typename WithPolicies<Policies...>::template ArgTypeList<ReturnType, ThisType, Args...> args;
         using OriginalInvoker = FunctorInvoker<decltype(callable), ReturnType, ThisType, Args...>;
-        auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke;
+        auto invoke = &maybe_wrap_async<OriginalInvoker, Policies...>::invoke2;
+
+        facebook::jsi::Function invokeJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *rt,
+                facebook::jsi::PropNameID::forAscii(*rt, std::string(methodName)+"_"+getSignature(invoke)),
+                args.getCount() + 1,
+                [invoke, callable](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    if constexpr (std::is_same<ReturnType, void>::value) {
+                    callInvokeVoid(sizeof...(Args) + 1, invoke, callable);
+                    return nullptr;
+                } else {
+                    callInvoke(sizeof...(Args) + 1, invoke, callable);
+                }
+                });
+
         _embind_register_class_function(
                 TypeID<ClassType>::get(),
                 methodName,
                 args.getCount(),
                 args.getTypes(),
                 getSignature(invoke),
-                reinterpret_cast<GenericFunction>(invoke),
+                invokeJSIFunc,
                 getContext(callable),
                 false,
                 isAsync<Policies...>::value);
@@ -1759,7 +2084,6 @@ facebook::jsi::Value dsadsa(facebook::jsi::Runtime& rt, ClassType* rawValue, Bas
 
 template<typename ClassType, typename BaseSpecifier>
 facebook::jsi::Value dsadsa(facebook::jsi::Runtime& rt, ClassType* rawValue, internal::NoBaseClass*) {
-    // __android_log_print(ANDROID_LOG_VERBOSE, APPNAME, "dsadsa: undefined");
     return facebook::jsi::Value::undefined();
 }
 
@@ -1776,7 +2100,6 @@ facebook::jsi::Value downcastHelper(facebook::jsi::Runtime& rt, ClassType* rawVa
 
 template<typename ClassType, typename BaseSpecifier>
 facebook::jsi::Value downcastHelper(facebook::jsi::Runtime& rt, ClassType* rawValue, internal::NoBaseClass*) {
-    // __android_log_print(ANDROID_LOG_VERBOSE, APPNAME, "downcastHelper: undefined");
     return facebook::jsi::Value::undefined();
 }
 
@@ -1822,8 +2145,9 @@ public:
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_downcast"),
                 1,
                 [downcast](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
-                    // __android_log_print(ANDROID_LOG_VERBOSE, APPNAME, "downcast: undefined");
-                    return facebook::jsi::Value::undefined();
+                    ClassType* t = reinterpret_cast<ClassType*>(args[0].asBigInt(rt).asUint64(rt));
+                    BaseSpecifier* a = nullptr;
+                    return downcastHelper<ClassType, BaseSpecifier>(rt, t, a);
                 });
 
         facebook::jsi::Function destructorJSIFunc = facebook::jsi::Function::createFromHostFunction(
@@ -1870,7 +2194,6 @@ public:
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_get"),
                 1,
                 [get](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
-                    // return facebook::jsi::Value::undefined();
                     uint64_t ptrNumber = args[0].asBigInt(rt).asUint64(rt);
                     auto b = *reinterpret_cast<PointerType*>(ptrNumber);
                     auto a = get(b);
@@ -1882,8 +2205,8 @@ public:
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_construct_null"),
                 1,
                 [construct_null](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
-                    // __android_log_print(ANDROID_LOG_VERBOSE, APPNAME, "construct_nullJSIFunc: undefined");
-                    return facebook::jsi::Value::undefined();
+                    auto a = construct_null();
+                    return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(a));
                 });
 
         facebook::jsi::Function shareJSIFunc = facebook::jsi::Function::createFromHostFunction(
@@ -1893,7 +2216,8 @@ public:
                 [share](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
                     uint64_t pNumber = args[0].asBigInt(rt).asUint64(rt);
                     auto p = reinterpret_cast<PointeeType*>(pNumber);
-                    uint64_t vNumber = (uint64_t) args[1].getNumber();
+                    // uint64_t vNumber = (uint64_t) args[1].getNumber();
+                    uint64_t vNumber = args[1].asBigInt(rt).asUint64(rt);
                     EM_VAL v = reinterpret_cast<EM_VAL>(vNumber);
                     auto a = share(p, v);
                     auto e = facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(a));
@@ -2039,15 +2363,15 @@ public:
         using namespace internal;
 
         auto getter = &MemberAccess<ClassType, FieldType>::template getWire2<ClassType>;
+        FieldType ClassType::* a = const_cast<FieldType ClassType::*>(field);
 
         facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
                 *jsRuntime,
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(fieldName)+"_gter"),
                 2,
-                [getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
-                    FieldType* t = reinterpret_cast<FieldType*>(args[0].asBigInt(rt).asUint64(rt));
+                [getter, a](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
                     ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
-                    return getter(*t, *t2);
+                    return getter(a, *t2);
                 });
 
         facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
@@ -2055,7 +2379,6 @@ public:
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(fieldName)+"_ster"),
                 0,
                 [](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
-                    // __android_log_print(ANDROID_LOG_VERBOSE, APPNAME, "setterJSIFunc: undefined");
                     return facebook::jsi::Value::undefined();
                 });
 
@@ -2067,7 +2390,7 @@ public:
                 getterJSIFunc,
                 getContext(field),
                 0,
-                0,
+                "",
                 setterJSIFunc,
                 0);
         return *this;
@@ -2084,20 +2407,20 @@ public:
                 *jsRuntime,
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(fieldName)+"_gter"),
                 2,
-                [getter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                [getter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
                     FieldType* t = reinterpret_cast<FieldType*>(args[0].asBigInt(rt).asUint64(rt));
                     ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
-                    return getter(*t, *t2);
+                    return getter(field, *t2);
                 });
 
         facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
                 *jsRuntime,
                 facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(fieldName)+"_ster"),
                 3,
-                [setter](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                [setter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
                     FieldType* t = reinterpret_cast<FieldType*>(args[0].asBigInt(rt).asUint64(rt));
                     ClassType* t2 = reinterpret_cast<ClassType*>(args[1].asBigInt(rt).asUint64(rt));
-                    setter(*t, *t2, args[2]);
+                    setter(field, *t2, args[2]);
                     return facebook::jsi::Value::undefined();
                 });
 
@@ -2247,16 +2570,36 @@ public:
     EMSCRIPTEN_ALWAYS_INLINE const class_& class_property(const char* name, const FieldType* field) const {
         using namespace internal;
 
-        auto getter = &GlobalAccess<FieldType>::get;
+        auto getter = &GlobalAccess<FieldType>::get2;
+
+        FieldType* a = const_cast<FieldType*>(field);
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_"+getSignature(getter)),
+                1,
+                [getter, a](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    return getter(a);
+                });
+
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_null_setter"),
+                2,
+                [](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_class_class_property(
                 TypeID<ClassType>::get(),
                 name,
                 TypeID<FieldType>::get(),
-                field,
+                a,
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
-                0,
-                0);
+                getterJSIFunc,
+                "",
+                setterJSIFunc);
         return *this;
     }
 
@@ -2264,17 +2607,36 @@ public:
     EMSCRIPTEN_ALWAYS_INLINE const class_& class_property(const char* name, FieldType* field) const {
         using namespace internal;
 
-        auto getter = &GlobalAccess<FieldType>::get;
-        auto setter = &GlobalAccess<FieldType>::set;
+        auto getter = &GlobalAccess<FieldType>::get2;
+        auto setter = &GlobalAccess<FieldType>::set2;
+
+        facebook::jsi::Function getterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_"+getSignature(getter)),
+                1,
+                [getter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    return getter(field);
+                });
+
+
+        facebook::jsi::Function setterJSIFunc = facebook::jsi::Function::createFromHostFunction(
+                *jsRuntime,
+                facebook::jsi::PropNameID::forAscii(*jsRuntime, std::string(name)+"_"+getSignature(setter)),
+                2,
+                [setter, field](facebook::jsi::Runtime& rt, const facebook::jsi::Value& thisVal, const facebook::jsi::Value* args, size_t count) {
+                    setter(field, args[1]);
+                    return facebook::jsi::Value::undefined();
+                });
+
         _embind_register_class_class_property(
                 TypeID<ClassType>::get(),
                 name,
                 TypeID<FieldType>::get(),
                 field,
                 getSignature(getter),
-                reinterpret_cast<GenericFunction>(getter),
+                getterJSIFunc,
                 getSignature(setter),
-                reinterpret_cast<GenericFunction>(setter));
+                setterJSIFunc);
         return *this;
     }
 };
@@ -2285,11 +2647,11 @@ public:
 
 namespace internal {
 
-    template<typename VectorType>
+    template<typename VectorType, typename Type>
     struct VectorAccess {
         static val get(
                 const VectorType& v,
-                typename VectorType::size_type index
+                int index
         ) {
             if (index < v.size()) {
                 return val(v[index]);
@@ -2300,7 +2662,7 @@ namespace internal {
 
         static bool set(
                 VectorType& v,
-                typename VectorType::size_type index,
+                int index,
                 const typename VectorType::value_type& value
         ) {
             v[index] = value;
@@ -2322,8 +2684,8 @@ class_<std::vector<T>> register_vector(const char* name) {
             .function("push_back", push_back)
             .function("resize", resize)
             .function("size", size)
-            .function("get", &internal::VectorAccess<VecType>::get)
-            .function("set", &internal::VectorAccess<VecType>::set)
+            .function("get", &internal::VectorAccess<VecType, T>::get)
+            .function("set", &internal::VectorAccess<VecType, T>::set)
             ;
 }
 
@@ -2426,8 +2788,12 @@ namespace internal {
         return static_cast<double>(t);
     }
 
-    template<typename T> uintptr_t asGenericValue(T* p) {
-        return reinterpret_cast<uintptr_t>(p);
+    template<typename T> uint64_t asGenericValue(T* p) {
+        return reinterpret_cast<uint64_t>(p);
+    }
+
+    template<typename T> std::string asGenericValue(std::string p) {
+        return p;
     }
 
 }
@@ -2439,7 +2805,8 @@ void constant(const char* name, const ConstantType& v) {
     _embind_register_constant(
             name,
             TypeID<const ConstantType&>::get(),
-            static_cast<double>(asGenericValue(BT::toWireType(v))));
+            BT::toWireType2(*jsRuntime, v)
+            );
 }
 
 // EMSCRIPTEN_BINDINGS creates a static struct to initialize the binding which

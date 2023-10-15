@@ -27,6 +27,8 @@ import {
 
 import Cppjs from 'react-native-cppjs';
 
+import runAllTests from './src/embind_test.js';
+
 const BugraClass = Cppjs.BugraClass;
 const Bugra2Class = Cppjs.Bugra2Class;
 const Bugra3Class = Cppjs.Bugra3Class;
@@ -40,6 +42,19 @@ console.log(Bugra3Class.oo(2));
 
 const f = new Bugra2Class(6);
 console.log(Bugra3Class.waav(f, 6));
+
+const myIntVector = Bugra3Class.getIntVector();
+const myStringVector = Bugra3Class.getStringVector();
+console.log(myIntVector.get(0));
+myIntVector.set(0, 5);
+console.log(myIntVector.get(0));
+
+console.log(myStringVector.get(0));
+myStringVector.set(0, 'replace');
+console.log(myStringVector.get(0));
+console.log('=================================');
+console.log('=================================');
+runAllTests(Cppjs);
 
 type SectionProps = PropsWithChildren<{
   title: string;

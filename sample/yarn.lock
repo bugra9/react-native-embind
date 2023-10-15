@@ -3100,6 +3100,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"assert@npm:2.1.0":
+  version: 2.1.0
+  resolution: "assert@npm:2.1.0"
+  dependencies:
+    call-bind: ^1.0.2
+    is-nan: ^1.3.2
+    object-is: ^1.1.5
+    object.assign: ^4.1.4
+    util: ^0.12.5
+  checksum: 1ed1cabba9abe55f4109b3f7292b4e4f3cf2953aad8dc148c0b3c3bd676675c31b1abb32ef563b7d5a19d1715bf90d1e5f09fad2a4ee655199468902da80f7c2
+  languageName: node
+  linkType: hard
+
 "ast-types@npm:0.15.2":
   version: 0.15.2
   resolution: "ast-types@npm:0.15.2"
@@ -5324,6 +5337,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-arguments@npm:^1.0.4":
+  version: 1.1.1
+  resolution: "is-arguments@npm:1.1.1"
+  dependencies:
+    call-bind: ^1.0.2
+    has-tostringtag: ^1.0.0
+  checksum: 7f02700ec2171b691ef3e4d0e3e6c0ba408e8434368504bb593d0d7c891c0dbfda6d19d30808b904a6cb1929bca648c061ba438c39f296c2a8ca083229c49f27
+  languageName: node
+  linkType: hard
+
 "is-array-buffer@npm:^3.0.1, is-array-buffer@npm:^3.0.2":
   version: 3.0.2
   resolution: "is-array-buffer@npm:3.0.2"
@@ -5421,6 +5444,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-generator-function@npm:^1.0.7":
+  version: 1.0.10
+  resolution: "is-generator-function@npm:1.0.10"
+  dependencies:
+    has-tostringtag: ^1.0.0
+  checksum: d54644e7dbaccef15ceb1e5d91d680eb5068c9ee9f9eb0a9e04173eb5542c9b51b5ab52c5537f5703e48d5fddfd376817c1ca07a84a407b7115b769d4bdde72b
+  languageName: node
+  linkType: hard
+
 "is-glob@npm:^4.0.0, is-glob@npm:^4.0.1, is-glob@npm:^4.0.3":
   version: 4.0.3
   resolution: "is-glob@npm:4.0.3"
@@ -5441,6 +5473,16 @@ __metadata:
   version: 1.0.1
   resolution: "is-lambda@npm:1.0.1"
   checksum: 93a32f01940220532e5948538699ad610d5924ac86093fcee83022252b363eb0cc99ba53ab084a04e4fb62bf7b5731f55496257a4c38adf87af9c4d352c71c35
+  languageName: node
+  linkType: hard
+
+"is-nan@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "is-nan@npm:1.3.2"
+  dependencies:
+    call-bind: ^1.0.0
+    define-properties: ^1.1.3
+  checksum: 5dfadcef6ad12d3029d43643d9800adbba21cf3ce2ec849f734b0e14ee8da4070d82b15fdb35138716d02587c6578225b9a22779cab34888a139cc43e4e3610a
   languageName: node
   linkType: hard
 
@@ -5537,6 +5579,15 @@ __metadata:
     gopd: ^1.0.1
     has-tostringtag: ^1.0.0
   checksum: aac6ecb59d4c56a1cdeb69b1f129154ef462bbffe434cb8a8235ca89b42f258b7ae94073c41b3cb7bce37f6a1733ad4499f07882d5d5093a7ba84dfc4ebb8017
+  languageName: node
+  linkType: hard
+
+"is-typed-array@npm:^1.1.3":
+  version: 1.1.12
+  resolution: "is-typed-array@npm:1.1.12"
+  dependencies:
+    which-typed-array: ^1.1.11
+  checksum: 4c89c4a3be07186caddadf92197b17fda663a9d259ea0d44a85f171558270d36059d1c386d34a12cba22dfade5aba497ce22778e866adc9406098c8fc4771796
   languageName: node
   linkType: hard
 
@@ -7787,6 +7838,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"object-is@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "object-is@npm:1.1.5"
+  dependencies:
+    call-bind: ^1.0.2
+    define-properties: ^1.1.3
+  checksum: 989b18c4cba258a6b74dc1d74a41805c1a1425bce29f6cabb50dcb1a6a651ea9104a1b07046739a49a5bb1bc49727bcb00efd5c55f932f6ea04ec8927a7901fe
+  languageName: node
+  linkType: hard
+
 "object-keys@npm:^1.1.1":
   version: 1.1.1
   resolution: "object-keys@npm:1.1.1"
@@ -8292,33 +8353,61 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-cppjs@file:../react-native-cppjs::locator=sample%40workspace%3A.":
-  version: 0.1.0
-  resolution: "react-native-cppjs@file:../react-native-cppjs#../react-native-cppjs::hash=4bf2f8&locator=sample%40workspace%3A."
+"react-native-cppjs-sample@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "react-native-cppjs-sample@workspace:."
+  dependencies:
+    "@babel/core": ^7.20.0
+    "@babel/preset-env": ^7.20.0
+    "@babel/runtime": ^7.20.0
+    "@react-native/eslint-config": ^0.72.2
+    "@react-native/metro-config": ^0.72.6
+    "@tsconfig/react-native": ^3.0.0
+    "@types/metro-config": ^0.76.3
+    "@types/react": ^18.0.24
+    "@types/react-test-renderer": ^18.0.0
+    assert: 2.1.0
+    babel-jest: ^29.2.1
+    eslint: ^8.19.0
+    jest: ^29.2.1
+    metro-react-native-babel-preset: 0.76.5
+    prettier: ^2.4.1
+    react: 18.2.0
+    react-native: 0.72.0
+    react-native-cppjs: "file:../react-native-cppjs"
+    react-native-embind: "file:../react-native-embind"
+    react-test-renderer: 18.2.0
+    typescript: 4.8.4
+  languageName: unknown
+  linkType: soft
+
+"react-native-cppjs@file:../react-native-cppjs::locator=react-native-cppjs-sample%40workspace%3A.":
+  version: 0.3.0
+  resolution: "react-native-cppjs@file:../react-native-cppjs#../react-native-cppjs::hash=f89fb1&locator=react-native-cppjs-sample%40workspace%3A."
   dependencies:
     cpp.js: 0.6.1
     react-native-embind: "file:../react-native-embind"
   peerDependencies:
     react-native: ^0.72.0
-  checksum: 4d5fde816b7a3e51f8aac9d6c8e5aedc41a54600c362edd432f1efa74caf388b6a6e40ff695f2829611b4f4e42a5ed403a409c200f4202a85d93ecf5ef34fb2e
+  checksum: feab5fc039fe12cea7d9e556b1c5d8c8e389011b870fa575f5b94bad96c13764ccf258202d0fd0909f2769390491d4f7cf885504f9f98101bee58e518d36af1a
   languageName: node
   linkType: hard
 
-"react-native-embind@file:../react-native-embind::locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3D4bf2f8%26locator%3Dsample%2540workspace%253A.":
-  version: 0.1.0
-  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=96855b&locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3D4bf2f8%26locator%3Dsample%2540workspace%253A."
+"react-native-embind@file:../react-native-embind::locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3Df89fb1%26locator%3Dreact-native-cppjs-sample%2540workspace%253A.":
+  version: 0.3.0
+  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=b33bff&locator=react-native-cppjs%40file%3A..%2Freact-native-cppjs%23..%2Freact-native-cppjs%3A%3Ahash%3Df89fb1%26locator%3Dreact-native-cppjs-sample%2540workspace%253A."
   peerDependencies:
     react-native: ^0.72.0
-  checksum: 159e67c09fc6b2a134a76a895e7c3f6d017ad5fd10aa87a032425a4440797ccfe3d8013c6d3429227c22d49327969a88417f4bcc5627adb39b3b45757692de44
+  checksum: 6dc37e122c1c9c0641ce632b07bdea4f59c0c333d995068517f5a1ccf3dfbb252cb7f480f4dae832a0a7bf537d29494ce389ef735bd1f1d773ef7cb0d6343857
   languageName: node
   linkType: hard
 
-"react-native-embind@file:../react-native-embind::locator=sample%40workspace%3A.":
-  version: 0.1.0
-  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=96855b&locator=sample%40workspace%3A."
+"react-native-embind@file:../react-native-embind::locator=react-native-cppjs-sample%40workspace%3A.":
+  version: 0.3.0
+  resolution: "react-native-embind@file:../react-native-embind#../react-native-embind::hash=b33bff&locator=react-native-cppjs-sample%40workspace%3A."
   peerDependencies:
     react-native: ^0.72.0
-  checksum: 159e67c09fc6b2a134a76a895e7c3f6d017ad5fd10aa87a032425a4440797ccfe3d8013c6d3429227c22d49327969a88417f4bcc5627adb39b3b45757692de44
+  checksum: 6dc37e122c1c9c0641ce632b07bdea4f59c0c333d995068517f5a1ccf3dfbb252cb7f480f4dae832a0a7bf537d29494ce389ef735bd1f1d773ef7cb0d6343857
   languageName: node
   linkType: hard
 
@@ -8713,33 +8802,6 @@ __metadata:
   checksum: cab8f25ae6f1434abee8d80023d7e72b598cf1327164ddab31003c51215526801e40b66c5e65d658a0af1e9d6478cadcb4c745f4bd6751f97d8644786c0978b0
   languageName: node
   linkType: hard
-
-"sample@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "sample@workspace:."
-  dependencies:
-    "@babel/core": ^7.20.0
-    "@babel/preset-env": ^7.20.0
-    "@babel/runtime": ^7.20.0
-    "@react-native/eslint-config": ^0.72.2
-    "@react-native/metro-config": ^0.72.6
-    "@tsconfig/react-native": ^3.0.0
-    "@types/metro-config": ^0.76.3
-    "@types/react": ^18.0.24
-    "@types/react-test-renderer": ^18.0.0
-    babel-jest: ^29.2.1
-    eslint: ^8.19.0
-    jest: ^29.2.1
-    metro-react-native-babel-preset: 0.76.5
-    prettier: ^2.4.1
-    react: 18.2.0
-    react-native: 0.72.0
-    react-native-cppjs: "file:../react-native-cppjs"
-    react-native-embind: "file:../react-native-embind"
-    react-test-renderer: 18.2.0
-    typescript: 4.8.4
-  languageName: unknown
-  linkType: soft
 
 "scheduler@npm:0.24.0-canary-efb381bbf-20230505":
   version: 0.24.0-canary-efb381bbf-20230505
@@ -9578,6 +9640,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"util@npm:^0.12.5":
+  version: 0.12.5
+  resolution: "util@npm:0.12.5"
+  dependencies:
+    inherits: ^2.0.3
+    is-arguments: ^1.0.4
+    is-generator-function: ^1.0.7
+    is-typed-array: ^1.1.3
+    which-typed-array: ^1.1.2
+  checksum: 705e51f0de5b446f4edec10739752ac25856541e0254ea1e7e45e5b9f9b0cb105bc4bd415736a6210edc68245a7f903bf085ffb08dd7deb8a0e847f60538a38a
+  languageName: node
+  linkType: hard
+
 "utils-merge@npm:1.0.1":
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
@@ -9669,6 +9744,19 @@ __metadata:
   version: 2.0.1
   resolution: "which-module@npm:2.0.1"
   checksum: 1967b7ce17a2485544a4fdd9063599f0f773959cca24176dbe8f405e55472d748b7c549cd7920ff6abb8f1ab7db0b0f1b36de1a21c57a8ff741f4f1e792c52be
+  languageName: node
+  linkType: hard
+
+"which-typed-array@npm:^1.1.11, which-typed-array@npm:^1.1.2":
+  version: 1.1.11
+  resolution: "which-typed-array@npm:1.1.11"
+  dependencies:
+    available-typed-arrays: ^1.0.5
+    call-bind: ^1.0.2
+    for-each: ^0.3.3
+    gopd: ^1.0.1
+    has-tostringtag: ^1.0.0
+  checksum: 711ffc8ef891ca6597b19539075ec3e08bb9b4c2ca1f78887e3c07a977ab91ac1421940505a197758fb5939aa9524976d0a5bbcac34d07ed6faa75cedbb17206
   languageName: node
   linkType: hard
 

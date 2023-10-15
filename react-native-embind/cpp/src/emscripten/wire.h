@@ -25,6 +25,9 @@
 
 #include <jsi/jsi.h>
 
+// #include <android/log.h>
+// #define APPNAME "react-native-cppjs"
+
 #define EMSCRIPTEN_ALWAYS_INLINE __attribute__((always_inline))
 
 #ifndef EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES
@@ -246,30 +249,40 @@ struct WithPolicies {
 template<typename T, typename = void>
 struct BindingType;
 
-#define EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(type)                 \
-template<>                                                  \
-struct BindingType<type> {                                  \
-    typedef type WireType;                                  \
-    typedef facebook::jsi::Value WireType2;                                  \
-    constexpr static WireType toWireType(const type& v) {   \
-        return v;                                           \
-    }                                                       \
-    constexpr static type fromWireType(WireType v) {        \
-        return v;                                           \
-    }                                                       \
-}
+#define EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(type)                              \
+template<>                                                                              \
+struct BindingType<type> {                                                              \
+    typedef type WireType;                                                              \
+    typedef const facebook::jsi::Value WireType2;                                       \
+                                                                                        \
+    static WireType toWireType(type b) {                                                \
+        return b;                                                                       \
+    }                                                                                   \
+    static type fromWireType(WireType wt) {                                             \
+        return wt;                                                                      \
+    }                                                                                   \
+                                                                                        \
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType b) {              \
+        return WireType2((double) b);                                                   \
+    }                                                                                   \
+    static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {          \
+        return (WireType) wt.getNumber();                                               \
+    }                                                                                   \
+};
 
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(char);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(signed char);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(unsigned char);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(signed short);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(unsigned short);
-// EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(signed int);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(unsigned int);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(signed long);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(unsigned long);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(float);
-EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(double);
+
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(char);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(signed char);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(unsigned char);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(signed short);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(unsigned short);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(int);
+// EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(signed int);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(unsigned int);
+// EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(signed long);
+// EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(unsigned long);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(float);
+EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE_NUMBER(double);
 // EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(int64_t);
 // EMSCRIPTEN_DEFINE_NATIVE_BINDING_TYPE(uint64_t);
 
@@ -282,24 +295,11 @@ struct BindingType<void> {
 template<>
 struct BindingType<bool> {
     typedef bool WireType;
-    typedef facebook::jsi::Value WireType2;
+    typedef const facebook::jsi::Value WireType2;
     static WireType toWireType(bool b) {
         return b;
     }
     static bool fromWireType(WireType wt) {
-        return wt;
-    }
-};
-
-template<>
-struct BindingType<int> {
-    typedef int WireType;
-    typedef const facebook::jsi::Value WireType2;
-
-    static WireType toWireType(int b) {
-        return b;
-    }
-    static int fromWireType(WireType wt) {
         return wt;
     }
 
@@ -307,9 +307,62 @@ struct BindingType<int> {
         return WireType2(b);
     }
     static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
-        return (int) wt.getNumber();
+        return wt.getBool();
     }
 };
+
+template<>
+struct BindingType<int64_t> {
+    typedef int64_t WireType;
+    typedef const facebook::jsi::Value WireType2;
+
+    static WireType toWireType(WireType b) {
+        return b;
+    }
+    static WireType fromWireType(WireType wt) {
+        return wt;
+    }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType b) {
+        return facebook::jsi::BigInt::fromInt64(rt, b);
+    }
+    static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+        return wt.asBigInt(rt).asInt64(rt);
+    }
+};
+
+template<>
+struct BindingType<uint64_t> {
+    typedef uint64_t WireType;
+    typedef const facebook::jsi::Value WireType2;
+
+    static WireType toWireType(WireType b) {
+        return b;
+    }
+    static WireType fromWireType(WireType wt) {
+        return wt;
+    }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType b) {
+        return facebook::jsi::BigInt::fromUint64(rt, b);
+    }
+    static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+        return wt.asBigInt(rt).asUint64(rt);
+    }
+};
+
+    template<>
+    struct BindingType<facebook::jsi::Value> {
+        typedef const facebook::jsi::Value WireType;
+        typedef const facebook::jsi::Value WireType2;
+
+        static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType& b) {
+            return WireType2(rt, b);
+        }
+        static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+            return WireType(rt, wt);
+        }
+    };
 
 template<typename T>
 struct BindingType<std::basic_string<T>> {
@@ -319,6 +372,7 @@ struct BindingType<std::basic_string<T>> {
         size_t length;
         T data[1]; // trailing data
     }* WireType;
+    typedef const facebook::jsi::Value WireType2;
     static WireType toWireType(const String& v) {
         WireType wt = (WireType)malloc(sizeof(size_t) + v.length() * sizeof(T));
         wt->length = v.length();
@@ -327,6 +381,13 @@ struct BindingType<std::basic_string<T>> {
     }
     static String fromWireType(WireType v) {
         return String(v->data, v->length);
+    }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, String v) {
+        return facebook::jsi::String::createFromUtf8(rt, v);
+    }
+    static String fromWireType2(facebook::jsi::Runtime& rt, WireType2& v) {
+        return v.getString(rt).utf8(rt);
     }
 };
 
@@ -354,10 +415,10 @@ struct BindingType<T&&> {
         return BindingType<T>::fromWireType(wt);
     }
 
-    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType& v) {
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, const T& v) {
         return BindingType<T>::toWireType2(rt, v);
     }
-    static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+    static T fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
         return BindingType<T>::fromWireType2(rt, wt);
     }
 };
@@ -374,7 +435,7 @@ struct BindingType<T*> {
         return wt;
     }
 
-    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType& b) {
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, WireType b) {
         return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(b));
     }
     static WireType fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
@@ -401,16 +462,13 @@ struct GenericBindingType {
     }
 
     static WireType2 toWireType2(facebook::jsi::Runtime& rt, const T& v) {
-        return WireType2::undefined();
-        // return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(new T(v)));
+        return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(new T(v)));
     }
     static WireType2 toWireType2(facebook::jsi::Runtime& rt, T&& v) {
         WireType wireType = new T(std::forward<T>(v));
         auto b = reinterpret_cast<uint64_t>(wireType);
         auto a = facebook::jsi::BigInt::fromUint64(rt, b);
         return a;
-        // return WireType2::undefined();
-        // return facebook::jsi::BigInt::fromUint64(rt, reinterpret_cast<uint64_t>(new T(std::forward<T>(v))));
     }
 
     static ActualT& fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
@@ -421,6 +479,7 @@ struct GenericBindingType {
 template<typename T>
 struct GenericBindingType<std::unique_ptr<T>> {
     typedef typename BindingType<T*>::WireType WireType;
+    typedef const facebook::jsi::Value WireType2;
 
     static WireType toWireType(std::unique_ptr<T> p) {
         return BindingType<T*>::toWireType(p.release());
@@ -429,17 +488,33 @@ struct GenericBindingType<std::unique_ptr<T>> {
     static std::unique_ptr<T> fromWireType(WireType wt) {
         return std::unique_ptr<T>(BindingType<T*>::fromWireType(wt));
     }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, std::unique_ptr<T> p) {
+        return BindingType<T*>::toWireType2(rt, p.release());
+    }
+
+    static std::unique_ptr<T> fromWireType2(facebook::jsi::Runtime& rt, WireType2& wt) {
+        return std::unique_ptr<T>(BindingType<T*>::fromWireType2(rt, wt));
+    }
 };
 
 template<typename Enum>
 struct EnumBindingType {
     typedef Enum WireType;
+    typedef const facebook::jsi::Value WireType2;
 
     static WireType toWireType(Enum v) {
         return v;
     }
     static Enum fromWireType(WireType v) {
         return v;
+    }
+
+    static WireType2 toWireType2(facebook::jsi::Runtime& rt, Enum v) {
+        return WireType2((int) v);
+    }
+    static Enum fromWireType2(facebook::jsi::Runtime& rt, WireType2& v) {
+        return (WireType) v.asBigInt(rt).asUint64(rt);
     }
 };
 
